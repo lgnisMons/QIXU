@@ -1,0 +1,2 @@
+# Constitution
+Core immutable principles.
