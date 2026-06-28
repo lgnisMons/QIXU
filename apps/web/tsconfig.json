@@ -7,7 +7,13 @@
       "@qixu/ui/*": ["../../packages/ui/src/*"],
       "@qixu/config/*": ["../../packages/config/src/*"],
       "@qixu/types/*": ["../../packages/types/src/*"],
-      "@qixu/utils/*": ["../../packages/utils/src/*"]
+      "@qixu/utils/*": ["../../packages/utils/src/*"],
+      "@qixu/domain/*": ["../../packages/domain/src/*"],
+      "@qixu/domain": ["../../packages/domain/src/index.ts"],
+      "@qixu/contracts/*": ["../../packages/contracts/src/*"],
+      "@qixu/mock/*": ["../../packages/mock/src/*"],
+      "@qixu/schemas/*": ["../../packages/schemas/src/*"],
+      "@qixu/domain-runtime/*": ["../../packages/domain-runtime/src/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

@@ -193,6 +193,31 @@ Pure TypeScript interfaces: `LearningPlan`, `TutorMatch`, `AIRecommendation`, `G
 No business logic in React components. Mock first, real backend later. 10 packages typecheck clean.
 
 ### Next Steps
-- Sprint-007: Authentication & Growth Profile
-- Sprint-008: AI Assistant module
-- Sprint-009: Supabase integration
+- Sprint-008: Authentication & Growth Profile
+- Sprint-009: AI Assistant module
+- Sprint-010: Supabase integration
+
+## v0.6.0 — 2026-06-28
+
+### Learning Assessment Complete (Sprint-007 / TASK-0009)
+
+**Objective:** Build the first interactive AI capability — Learning Assessment. Multi-step workflow with mocked logic. No LLM, no backend, no database.
+
+**1. Assessment Domain Enhancement**
+`engine.ts` — mock engine (profile, strengths/weaknesses, suggested plan, tutor recommendation). `report.ts` — structured report generator with 6 section types.
+
+**2. Multi-Step Assessment Form** (5 steps)
+Grade → Subjects & Scores → Learning Goals → Study Habits → Review & Submit. With progress bar, animations, score sliders.
+
+**3. Reusable Assessment Report Component**
+6 sections: Learning Snapshot, Strength Analysis, Weakness Analysis, Growth Suggestions (phased plan), Next Step (CTA), Growth Timeline. Plus AI notes footer.
+
+**4. New Routes:** `/assessment` + `/result` — fully responsive.
+
+**5. Engineering**
+Assessment logic in domain layer. React components presentation-only. 10 packages typecheck clean. Extension point for LangGraph in Sprint-010+.
+
+### Next Steps
+- Sprint-008: Authentication & Growth Profile
+- Sprint-009: AI Assistant module
+- Sprint-010: Supabase integration

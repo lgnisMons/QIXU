@@ -60,11 +60,16 @@ export type {
 // Assessment domain
 export {
   createAssessment, submitAnswers, getAssessmentResult, listUserAssessments,
+  runAssessmentEngine, generateReport,
   AssessmentDomainError,
 } from "./assessment";
 export type {
   AssessmentQuestion, AssessmentAnswer, AssessmentResult,
   CreateAssessmentInput, SubmitAnswersInput,
+  AssessmentEngineInput, LearningProfile, TutorSuggestion,
+  AssessmentEngineOutput,
+  ReportSection, ReportContent, SnapshotContent, AnalysisContent,
+  SuggestionsContent, NextStepContent, TimelineContent,
 } from "./assessment";
 
 // User domain
