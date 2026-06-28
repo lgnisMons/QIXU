@@ -24,6 +24,10 @@ export const ROUTES = {
   dashboard: "/dashboard",
   assessment: "/assessment",
   growth: "/growth",
+  gaokaoVolunteer: "/gaokao-volunteer",
+  shenzhenTutor: "/shenzhen-tutor",
+  aiStudyPlanner: "/ai-study-planner",
+  aiToolsCourse: "/ai-tools-course",
 } as const;
 
 export const mainNav: NavItem[] = [
