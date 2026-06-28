@@ -259,3 +259,35 @@ Reach (冲) · Match (稳) · Safe (保) · Budget · City · Major · Employmen
 - Sprint-008: Authentication & Growth Profile
 - Sprint-009: AI Assistant module
 - Sprint-011: Supabase integration
+
+## v0.8.0 — 2026-06-28
+
+### Admission MVP Complete (Sprint-011 / TASK-0011)
+
+**Objective:** Launch the first public version of QIXU Admission Recommendation. Prioritize usability and launch speed. Guangdong only for MVP.
+
+**1. Multi-Step Admission Form** (`/admission`)
+3 steps: Score & Rank → Preferences (budget, city, major, career) → Review (adjustment, cooperative) & Submit. Responsive with progress bar and animations.
+
+**2. Recommendation Result Page** (`/admission-result`)
+Calls `runRecommendationEngine()` from knowledge domain. Displays full analysis.
+
+**3. Recommendation Report Component**
+Sections: Student Profile Card, Reach/Match/Safe grouped listings, **Cost Analysis** (tuition + living costs + 4-year estimate), Career Development Suggestions. Each recommendation card shows score breakdown, pass/fail indicators, collapsible rule details.
+
+**4. Cost Analysis (Key Differentiator)**
+Per-recommendation cost: tuition, estimated living cost (city-based lookup), 4-year total. Budget compatibility indicators. Tabular comparison.
+
+**5. SEO Landing Page**
+Target keywords: 高考志愿推荐, AI志愿填报, 免费志愿推荐, 高考分数能上什么大学, 高考位次推荐. OG metadata configured.
+
+**6. Domain-Runtime Integration**
+New `simulateAdmissionRecommendation()` scenario in `@qixu/domain-runtime` — orchestrates knowledge engine + growth records.
+
+**7. Engineering**
+All recommendation logic in knowledge domain. React components presentation-only. Engine replaceable. 10 packages typecheck clean. Ready for public beta launch.
+
+### Next Steps
+- Sprint-008: Authentication & Growth Profile
+- Sprint-009: AI Assistant module
+- Sprint-011: Supabase integration

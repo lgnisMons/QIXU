@@ -18,6 +18,7 @@
  *   /tutor     → tutor domain
  *   /dashboard → growth + user domain
  *   /tools     → ai + assessment domain
+ *   /admission → knowledge domain
  */
 
 import { registerUser, getUserProfile } from "@qixu/domain/user";
@@ -26,6 +27,8 @@ import { listTutors, matchTutor } from "@qixu/domain/tutor";
 import { runDiagnostic, generateRecommendations } from "@qixu/domain/ai";
 import { createAssessment, submitAnswers } from "@qixu/domain/assessment";
 import { addGrowthRecord, addMilestone, generateGrowthReport } from "@qixu/domain/growth";
+import { runRecommendationEngine } from "@qixu/domain/knowledge";
+import type { StudentProfile } from "@qixu/domain/knowledge";
 
 // ---------------------------------------------------------------------------
 // Scenario 1: New User Onboarding
@@ -191,4 +194,24 @@ export function simulateGrowthReport(input: {
   }
 
   return report;
+}
+
+// ---------------------------------------------------------------------------
+// Scenario 7: Admission Recommendation
+// ---------------------------------------------------------------------------
+
+export function simulateAdmissionRecommendation(student: StudentProfile) {
+  const result = runRecommendationEngine(student, {
+    province: student.province,
+    subjectType: "物理类",
+    maxRecommendations: 20,
+  });
+  addGrowthRecord({
+    userId: "student_001",
+    type: "achievement",
+    title: "完成高考志愿推荐",
+    description: `获得${result.recommendations.length}条推荐`,
+    data: { recommendations: result.recommendations.length },
+  });
+  return result;
 }
