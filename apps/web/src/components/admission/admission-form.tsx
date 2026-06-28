@@ -1,39 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight, ArrowLeft, Check, Send, MapPin, BookOpen, Target,
-  Wallet, Building, GraduationCap, Briefcase, Shield, Handshake,
+  Wallet, Building, GraduationCap, Briefcase, Shield, Handshake, Info,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@qixu/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@qixu/ui/card";
-import type { StudentProfile, MajorCategory, SubjectType, FinancialLevel } from "@qixu/domain";
+import type { StudentProfile, MajorCategory, SubjectType } from "@qixu/domain";
+import {
+  ADMISSION_PROVINCES, ADMISSION_CITIES,
+  MAJOR_CATEGORY_OPTIONS, CAREER_OPTIONS,
+  SUBJECT_TYPES, BUDGET_OPTIONS, getScoreRange,
+} from "@/lib/admission-data";
 
 const STEPS = [
-  { id: "basics", title: "成绩信息", icon: BookOpen },
-  { id: "preferences", title: "偏好设置", icon: Target },
-  { id: "review", title: "确认提交", icon: Check },
-] as const;
+  { id: "basics" as const, title: "成绩信息", icon: BookOpen, desc: "填写高考成绩基本信息" },
+  { id: "preferences" as const, title: "偏好设置", icon: Target, desc: "选择你的志愿偏好（可跳过，但会降低推荐质量）" },
+  { id: "review" as const, title: "确认提交", icon: Check, desc: "确认信息并生成推荐" },
+];
 type StepId = (typeof STEPS)[number]["id"];
-
-const PROVINCES = ["广东", "北京", "上海", "浙江", "江苏", "四川", "湖北", "湖南", "山东", "河南", "福建"];
-const MAJOR_CATEGORIES: { value: MajorCategory; label: string }[] = [
-  { value: "工学", label: "工学" }, { value: "理学", label: "理学" },
-  { value: "医学", label: "医学" }, { value: "文学", label: "文学" },
-  { value: "经济学", label: "经济学" }, { value: "管理学", label: "管理学" },
-  { value: "法学", label: "法学" }, { value: "教育学", label: "教育学" },
-  { value: "艺术学", label: "艺术学" }, { value: "农学", label: "农学" },
-];
-const CITIES = ["深圳", "广州", "珠海", "东莞", "佛山", "北京", "上海", "杭州", "南京", "成都", "武汉"];
-const CAREER_OPTIONS = ["互联网/科技", "金融", "医疗健康", "教育", "制造业", "公务员/事业单位", "创业", "科研", "文化传媒"];
-
-const BUDGET_OPTIONS = [
-  { value: 10000, label: "1万/年以下" }, { value: 30000, label: "1-3万/年" },
-  { value: 60000, label: "3-6万/年" }, { value: 120000, label: "6-12万/年" },
-  { value: 200000, label: "12万以上/年" },
-];
 
 function toggle<T>(arr: T[], setter: (v: T[]) => void, item: T, max?: number) {
   if (arr.includes(item)) setter(arr.filter((x) => x !== item));
@@ -55,14 +43,24 @@ export function AdmissionForm() {
   const [cooperative, setCooperative] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const step = STEPS[stepI] ?? STEPS[0];
+  // Dynamically adjust score range based on province
+  const scoreRange = getScoreRange(province);
+
+  const step = STEPS[stepI] ?? STEPS[0]!;
   const total = STEPS.length;
   const pct = ((stepI + 1) / total) * 100;
   const sid: StepId = step.id;
 
-  const canNext = () => {
+  // Adjust score to stay within province range when province changes
+  useEffect(() => {
+    const range = getScoreRange(province);
+    if (score > range.max) setScore(range.max);
+    if (score < range.min) setScore(range.min);
+  }, [province]);
+
+  const canNext = (): boolean => {
     switch (sid) {
-      case "basics": return !!province && score > 0 && rank > 0;
+      case "basics": return !!province && score > 0 && rank >= 1;
       case "preferences": return budget > 0;
       case "review": return true;
     }
@@ -73,7 +71,7 @@ export function AdmissionForm() {
   const handleSubmit = () => {
     setSubmitting(true);
     const profile: StudentProfile = {
-      province, score, rank, budget,
+      province, subjectType, score, rank, budget,
       careerPreference: careerPref,
       majorPreference: majorPref,
       cityPreference: cityPref,
@@ -82,7 +80,7 @@ export function AdmissionForm() {
       familyFinancialLevel: budget >= 120000 ? "high" : budget >= 30000 ? "medium" : "low",
     };
     sessionStorage.setItem("qixu_admission_profile", JSON.stringify(profile));
-    setTimeout(() => router.push("/admission-result"), 500);
+    router.push("/admission-result");
   };
 
   return (
@@ -106,7 +104,7 @@ export function AdmissionForm() {
                 </div>
                 <div>
                   <CardTitle className="text-lg">第{stepI + 1}步：{step.title}</CardTitle>
-                  <CardDescription>{sid === "basics" ? "填写高考成绩基本信息" : sid === "preferences" ? "选择你的志愿偏好" : "确认信息并生成推荐"}</CardDescription>
+                  <CardDescription>{step.desc}</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -118,27 +116,44 @@ export function AdmissionForm() {
                   <div>
                     <label className="mb-1.5 block text-sm font-medium"><MapPin className="mr-1.5 inline h-3.5 w-3.5 text-primary" />省份</label>
                     <div className="flex flex-wrap gap-2">
-                      {PROVINCES.map((p) => (
+                      {ADMISSION_PROVINCES.map((p) => (
                         <button key={p} onClick={() => setProvince(p)} className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${province === p ? "border-primary/40 bg-primary/5 text-primary" : "border-border/50 text-muted-foreground hover:border-primary/20"}`}>{p}</button>
                       ))}
                     </div>
+                    <p className="mt-1.5 text-[11px] text-muted-foreground/60"><Info className="mr-1 inline h-3 w-3" />当前支持{ADMISSION_PROVINCES.length}个省份，更多省份数据持续扩展中</p>
                   </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium">科目类型</label>
                     <div className="flex gap-2">
-                      {(["物理类", "历史类"] as SubjectType[]).map((t) => (
+                      {SUBJECT_TYPES.map((t) => (
                         <button key={t} onClick={() => setSubjectType(t)} className={`rounded-lg border px-4 py-2 text-sm font-medium transition-all ${subjectType === t ? "border-primary/40 bg-primary/5 text-primary" : "border-border/50 text-muted-foreground"}`}>{t}</button>
                       ))}
                     </div>
                   </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium">高考分数：{score}分</label>
-                    <input type="range" min={300} max={750} value={score} onChange={(e) => setScore(Number(e.target.value))} className="w-full accent-primary" />
-                    <div className="mt-1 flex justify-between text-[10px] text-muted-foreground"><span>300</span><span>450</span><span>550</span><span>650</span><span>750</span></div>
+                    <input
+                      type="range"
+                      min={scoreRange.min} max={scoreRange.max}
+                      value={score}
+                      onChange={(e) => setScore(Number(e.target.value))}
+                      className="w-full accent-primary"
+                    />
+                    <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+                      <span>{scoreRange.min}</span><span>{Math.round((scoreRange.min + scoreRange.max) / 3)}</span>
+                      <span>{Math.round((scoreRange.min + scoreRange.max) * 2 / 3)}</span><span>{scoreRange.max}</span>
+                    </div>
                   </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium">全省位次</label>
-                    <input type="number" value={rank} onChange={(e) => setRank(Number(e.target.value))} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-ring" placeholder="输入你的全省排名" />
+                    <input
+                      type="number" min={1} max={999999}
+                      value={rank}
+                      onChange={(e) => setRank(Math.max(1, Number(e.target.value)))}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-ring"
+                      placeholder="输入你的全省排名（1-999999）"
+                    />
+                    <p className="mt-1 text-[10px] text-muted-foreground/60">输入正整数（全省排名），排名越靠前数字越小</p>
                   </div>
                 </div>
               )}
@@ -147,7 +162,7 @@ export function AdmissionForm() {
               {sid === "preferences" && (
                 <div className="space-y-5">
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium"><Wallet className="mr-1.5 inline h-3.5 w-3.5 text-primary" />学费预算</label>
+                    <label className="mb-1.5 block text-sm font-medium"><Wallet className="mr-1.5 inline h-3.5 w-3.5 text-primary" />年度总预算（学费+生活费）</label>
                     <div className="flex flex-wrap gap-2">
                       {BUDGET_OPTIONS.map((b) => (
                         <button key={b.value} onClick={() => setBudget(b.value)} className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${budget === b.value ? "border-primary/40 bg-primary/5 text-primary" : "border-border/50 text-muted-foreground hover:border-primary/20"}`}>{b.label}</button>
@@ -155,26 +170,26 @@ export function AdmissionForm() {
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium"><Building className="mr-1.5 inline h-3.5 w-3.5 text-primary" />意向城市（可多选）</label>
+                    <label className="mb-1.5 block text-sm font-medium"><Building className="mr-1.5 inline h-3.5 w-3.5 text-primary" />意向城市（可多选，最多5个）</label>
                     <div className="flex flex-wrap gap-2">
-                      {CITIES.map((c) => (
+                      {ADMISSION_CITIES.map((c) => (
                         <button key={c} onClick={() => toggle(cityPref, setCityPref, c, 5)} className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${cityPref.includes(c) ? "border-primary/40 bg-primary/5 text-primary" : "border-border/50 text-muted-foreground hover:border-primary/20"}`}>{c}</button>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium"><GraduationCap className="mr-1.5 inline h-3.5 w-3.5 text-primary" />专业偏好（可多选）</label>
+                    <label className="mb-1.5 block text-sm font-medium"><GraduationCap className="mr-1.5 inline h-3.5 w-3.5 text-primary" />专业偏好（可多选，最多5个）</label>
                     <div className="flex flex-wrap gap-2">
-                      {MAJOR_CATEGORIES.map((m) => (
+                      {MAJOR_CATEGORY_OPTIONS.map((m) => (
                         <button key={m.value} onClick={() => toggle(majorPref, setMajorPref, m.value, 5)} className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${majorPref.includes(m.value) ? "border-primary/40 bg-primary/5 text-primary" : "border-border/50 text-muted-foreground hover:border-primary/20"}`}>{m.label}</button>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium"><Briefcase className="mr-1.5 inline h-3.5 w-3.5 text-primary" />职业兴趣（可多选）</label>
+                    <label className="mb-1.5 block text-sm font-medium"><Briefcase className="mr-1.5 inline h-3.5 w-3.5 text-primary" />职业兴趣（可多选，最多8个）</label>
                     <div className="flex flex-wrap gap-2">
                       {CAREER_OPTIONS.map((c) => (
-                        <button key={c} onClick={() => toggle(careerPref, setCareerPref, c)} className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${careerPref.includes(c) ? "border-primary/40 bg-primary/5 text-primary" : "border-border/50 text-muted-foreground hover:border-primary/20"}`}>{c}</button>
+                        <button key={c} onClick={() => toggle(careerPref, setCareerPref, c, 8)} className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${careerPref.includes(c) ? "border-primary/40 bg-primary/5 text-primary" : "border-border/50 text-muted-foreground hover:border-primary/20"}`}>{c}</button>
                       ))}
                     </div>
                   </div>
@@ -186,7 +201,7 @@ export function AdmissionForm() {
                 <div className="space-y-4">
                   <ReviewRow label="省份" value={province} />
                   <ReviewRow label="科目类型" value={subjectType} />
-                  <ReviewRow label="高考分数" value={`${score}分`} accent="primary" />
+                  <ReviewRow label="高考分数" value={`${score}分 (满分${scoreRange.max})`} accent="primary" />
                   <ReviewRow label="全省位次" value={`第${rank.toLocaleString()}名`} accent="primary" />
                   <ReviewRow label="预算" value={BUDGET_OPTIONS.find((b) => b.value === budget)?.label ?? ""} />
                   {cityPref.length > 0 && <ReviewRow label="意向城市" value={cityPref.join("、")} />}
@@ -194,18 +209,16 @@ export function AdmissionForm() {
                   {careerPref.length > 0 && <ReviewRow label="职业兴趣" value={careerPref.join("、")} />}
                   <hr className="border-border/40" />
                   <div className="space-y-2">
-                    <div onClick={() => setAdjustment(!adjustment)} className="flex cursor-pointer items-center gap-3 rounded-lg border border-border/30 px-4 py-3 transition-colors hover:border-primary/20">
-                      <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 ${adjustment ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>
-                        {adjustment && <Check className="h-3 w-3" />}
-                      </div>
-                      <div><div className="text-sm font-medium"><Shield className="mr-1 inline h-3.5 w-3.5 text-primary" />接受专业调剂</div><div className="text-xs text-muted-foreground">同意在目标专业满额时调剂到相近专业</div></div>
-                    </div>
-                    <div onClick={() => setCooperative(!cooperative)} className="flex cursor-pointer items-center gap-3 rounded-lg border border-border/30 px-4 py-3 transition-colors hover:border-primary/20">
-                      <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 ${cooperative ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>
-                        {cooperative && <Check className="h-3 w-3" />}
-                      </div>
-                      <div><div className="text-sm font-medium"><Handshake className="mr-1 inline h-3.5 w-3.5 text-primary" />接受中外合作办学</div><div className="text-xs text-muted-foreground">接受中外合作办学项目（学费较高）</div></div>
-                    </div>
+                    <ToggleOption
+                      enabled={adjustment} setter={setAdjustment}
+                      icon={Shield} title="接受专业调剂"
+                      desc="同意在目标专业满额时调剂到相近专业（增加录取概率，但可能录取到非首选专业）"
+                    />
+                    <ToggleOption
+                      enabled={cooperative} setter={setCooperative}
+                      icon={Handshake} title="接受中外合作办学"
+                      desc="接受中外合作办学项目（学费通常较高，10万+/年）"
+                    />
                   </div>
                 </div>
               )}
@@ -233,6 +246,20 @@ function ReviewRow({ label, value, accent }: { label: string; value: string; acc
     <div className="flex justify-between rounded-lg border border-border/30 px-4 py-2.5">
       <span className="text-sm text-muted-foreground">{label}</span>
       <span className={`text-sm font-medium ${accent === "primary" ? "text-primary" : ""}`}>{value}</span>
+    </div>
+  );
+}
+
+function ToggleOption({ enabled, setter, icon: Icon, title, desc }: { enabled: boolean; setter: (v: boolean) => void; icon: React.ComponentType<{ className?: string }>; title: string; desc: string }) {
+  return (
+    <div onClick={() => setter(!enabled)} className="flex cursor-pointer items-center gap-3 rounded-lg border border-border/30 px-4 py-3 transition-colors hover:border-primary/20">
+      <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 ${enabled ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>
+        {enabled && <Check className="h-3 w-3" />}
+      </div>
+      <div>
+        <div className="text-sm font-medium"><Icon className="mr-1 inline h-3.5 w-3.5 text-primary" />{title}</div>
+        <div className="text-xs text-muted-foreground">{desc}</div>
+      </div>
     </div>
   );
 }

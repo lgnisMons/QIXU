@@ -6,6 +6,7 @@
  */
 
 import type { University, Major, AdmissionRecord, SubjectType } from "./types";
+import { expandedUniversities, expandedRecords } from "./data-expanded";
 
 // ---------------------------------------------------------------------------
 // Mock Universities (10)
@@ -81,6 +82,51 @@ export const mockUniversities: University[] = [
     tags: ["应用技术", "产教融合", "德国模式", "新兴产业"],
     website: "https://www.sztu.edu.cn",
     description: "深圳技术大学借鉴德国应用技术大学经验，致力于培养高层次应用技术人才。",
+  },
+  // ---- 北京 ----
+  {
+    id: "u-011", name: "北京工业大学", province: "北京", city: "北京",
+    tier: "211", type: "理工",
+    tags: ["市属重点", "工科强校", "产学研"],
+    website: "https://www.bjut.edu.cn",
+    description: "北京工业大学是北京市属重点大学，国家211工程重点建设高校。",
+  },
+  {
+    id: "u-012", name: "首都师范大学", province: "北京", city: "北京",
+    tier: "双一流", type: "师范",
+    tags: ["基础教育", "教师摇篮", "人文学科"],
+    website: "https://www.cnu.edu.cn",
+    description: "首都师范大学是北京市属重点大学，国家双一流建设高校。",
+  },
+  // ---- 浙江 ----
+  {
+    id: "u-013", name: "浙江工业大学", province: "浙江", city: "杭州",
+    tier: "普通本科", type: "理工",
+    tags: ["省属重点", "工科强校", "产学研协同"],
+    website: "https://www.zjut.edu.cn",
+    description: "浙江工业大学是浙江省属重点大学，以工为主、理工结合。",
+  },
+  {
+    id: "u-014", name: "杭州电子科技大学", province: "浙江", city: "杭州",
+    tier: "普通本科", type: "理工",
+    tags: ["电子信息", "计算机", "数字经济"],
+    website: "https://www.hdu.edu.cn",
+    description: "杭州电子科技大学是一所电子信息特色突出的教学研究型大学。",
+  },
+  // ---- 湖北 ----
+  {
+    id: "u-015", name: "武汉理工大学", province: "湖北", city: "武汉",
+    tier: "211", type: "理工",
+    tags: ["建材建工", "交通", "汽车"],
+    website: "https://www.whut.edu.cn",
+    description: "武汉理工大学是教育部直属全国重点大学，国家211工程和双一流建设高校。",
+  },
+  {
+    id: "u-016", name: "华中师范大学", province: "湖北", city: "武汉",
+    tier: "211", type: "师范",
+    tags: ["教师教育", "人文社科"],
+    website: "https://www.ccnu.edu.cn",
+    description: "华中师范大学是教育部直属重点综合性师范大学。",
   },
 ];
 
@@ -247,7 +293,7 @@ export const mockAdmissionRecords: AdmissionRecord[] = [
 // ---------------------------------------------------------------------------
 
 export function getAllUniversities(): University[] {
-  return mockUniversities;
+  return [...mockUniversities, ...expandedUniversities];
 }
 
 export function getUniversityById(id: string): University | undefined {
@@ -269,7 +315,7 @@ export function getAdmissionRecords(filters?: {
   universityId?: string;
   majorId?: string;
 }): AdmissionRecord[] {
-  let records = mockAdmissionRecords;
+  let records = [...mockAdmissionRecords, ...expandedRecords];
   if (filters?.province) records = records.filter((r) => r.province === filters.province);
   if (filters?.year) records = records.filter((r) => r.year === filters.year);
   if (filters?.subjectType) records = records.filter((r) => r.subjectType === filters.subjectType);

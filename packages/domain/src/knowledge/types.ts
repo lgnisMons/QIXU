@@ -95,9 +95,11 @@ export type FinancialLevel = "low" | "medium" | "high";
 
 export interface StudentProfile {
   province: string;
+  subjectType: SubjectType;
   score: number;
   rank: number;
-  budget: number; // max annual tuition (CNY)
+  /** Annual total budget including tuition + living (CNY) */
+  budget: number;
   careerPreference: string[];
   majorPreference: MajorCategory[];
   cityPreference: string[];
@@ -135,7 +137,9 @@ export interface AdmissionRecommendation {
   universityId: string;
   majorId: string;
   universityName: string;
+  universityCity: string;
   majorName: string;
+  tuition: number;
   tier: "reach" | "match" | "safe";
   compositeScore: number; // 0–100
   rules: RuleResult[];

@@ -203,15 +203,15 @@ export function simulateGrowthReport(input: {
 export function simulateAdmissionRecommendation(student: StudentProfile) {
   const result = runRecommendationEngine(student, {
     province: student.province,
-    subjectType: "物理类",
+    subjectType: student.subjectType,
     maxRecommendations: 20,
   });
   addGrowthRecord({
     userId: "student_001",
     type: "achievement",
     title: "完成高考志愿推荐",
-    description: `获得${result.recommendations.length}条推荐`,
-    data: { recommendations: result.recommendations.length },
+    description: `${result.recommendations.length === 0 ? "暂未获得匹配推荐" : `获得${result.recommendations.length}条推荐`}`,
+    data: { count: result.recommendations.length, province: student.province, subjectType: student.subjectType },
   });
   return result;
 }

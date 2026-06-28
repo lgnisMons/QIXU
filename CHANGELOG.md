@@ -372,3 +372,25 @@ Douyin, Xiaohongshu, Bilibili, WeChat — each with optimized template (aspect r
 ### Next Steps
 - Sprint-013: Supabase integration
 - Sprint-014: AI Assistant module
+
+## v0.10.1 — 2026-06-28
+
+### Admission Trust Framework & Fixes (P0/P1/P2)
+
+**P0 — Trust Foundation:**
+1. Ethics spec (`specs/020-ethics-admission/`): 5 Human-in-the-Loop principles + 4-layer trust architecture
+2. Data expansion: 10 provinces × 31 universities × 3 years → ~230 records
+3. Bug fixes: subjectType no longer hardcoded, cost analysis uses real tuition, clean tier boundaries (no overlap), zero `!` assertions
+4. Risk flags on high-reach recs + budget/familyFinancialLevel actually used in rules
+5. SEO: FAQ JSON-LD schema, 12 expanded keywords
+
+**P1 — Product Experience:**
+6. Domain-driven data: provinces/cities/majors/careers from domain (not hardcoded in UI)
+7. Save/print report, validated form inputs, adaptive score range
+
+**P2 — Differentiation:**
+8. AI NL explanation (rule-driven, per-rec, expandable)
+9. Mentor review placeholder (Human-in-the-Loop ready)
+10. Decision reminder banner on every result
+
+14 packages typecheck clean. All admission routes 200.
