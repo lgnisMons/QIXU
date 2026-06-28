@@ -38,3 +38,4 @@ yarn-error.log*
 !.vscode/settings.json
 !.vscode/extensions.json
 .idea
+apps/remotion/
