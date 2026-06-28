@@ -135,6 +135,38 @@ QIXU/
 - `specs/004-reality-layer/README.md` — Spec document
 
 ### Next Steps
-- Sprint-005: Authentication & Growth Profile
-- Sprint-006: AI Assistant module
-- Sprint-007: Supabase integration
+- Sprint-006: Authentication & Growth Profile
+- Sprint-007: AI Assistant module
+- Sprint-008: Supabase integration
+
+## v0.4.0 — 2026-06-28
+
+### Platform Foundation Complete (Sprint-005 / TASK-0007)
+
+**Objective:** Transform QIXU from marketing website into scalable education platform — no business logic, no DB, no AI.
+
+**1. Global Configuration (6 modular files)**
+`@qixu/config/brand|contact|navigation|seo|social` + `/site` umbrella.
+
+**2. Route Foundation (8 stable routes)**
+`/`, `/ai`, `/tutor`, `/tools`, `/community`, `/about`, `/contact`, `/dashboard` — each with metadata.
+
+**3. Shared Page Templates (5 new in `@qixu/ui`)**
+`PageHeader`, `PageSection`, `PageCTA`, `Breadcrumb`, `EmptyState`.
+
+**4. Mock Data (`@qixu/mock`)**
+`teachers`, `courses`, `growth`, `assessment`, `community` — typed, no JSON.
+
+**5. Zod Schemas (`@qixu/schemas`)**
+`teacher`, `course`, `growth`, `assessment` — inferred types.
+
+**6. SEO Foundation**
+OG, Twitter Card, JSON-LD, `robots.ts`, `sitemap.ts`, `manifest.ts`.
+
+**7. Engineering**
+`ROUTES` constants, config-driven, full type safety, 7 packages typecheck clean.
+
+### Next Steps
+- Sprint-006: Authentication & Growth Profile
+- Sprint-007: AI Assistant module
+- Sprint-008: Supabase integration

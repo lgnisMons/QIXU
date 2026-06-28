@@ -6,7 +6,12 @@
   "exports": {
     ".": "./src/index.ts",
     "./tailwind": "./src/tailwind.config.ts",
-    "./site": "./src/site.ts"
+    "./site": "./src/site.ts",
+    "./brand": "./src/brand.ts",
+    "./contact": "./src/contact.ts",
+    "./navigation": "./src/navigation.ts",
+    "./seo": "./src/seo.ts",
+    "./social": "./src/social.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

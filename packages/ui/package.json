@@ -17,7 +17,12 @@
     "./sheet": "./src/components/sheet.tsx",
     "./dropdown-menu": "./src/components/dropdown-menu.tsx",
     "./container": "./src/components/container.tsx",
-    "./section": "./src/components/section.tsx"
+    "./section": "./src/components/section.tsx",
+    "./page-header": "./src/components/page-header.tsx",
+    "./page-section": "./src/components/page-section.tsx",
+    "./page-cta": "./src/components/page-cta.tsx",
+    "./breadcrumb": "./src/components/breadcrumb.tsx",
+    "./empty-state": "./src/components/empty-state.tsx"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
