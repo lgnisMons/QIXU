@@ -26,6 +26,16 @@ export const mockTeachers: Teacher[] = [
     userId: undefined,
   },
   {
+    id: "tutor-liao",
+    name: "廖老师",
+    title: "数学与逻辑思维导师",
+    school: "中山大学",
+    avatar: "",
+    specialties: ["数学思维", "逻辑推理", "竞赛指导"],
+    bio: "中山大学数学系硕士，擅长数学思维训练与逻辑推理培养，引导学生建立严谨的数学思维框架。",
+    userId: undefined,
+  },
+  {
     id: "tutor-yang-2",
     name: "杨老师",
     title: "学业规划导师",
