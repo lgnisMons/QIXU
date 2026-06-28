@@ -13,7 +13,11 @@
       "@qixu/contracts/*": ["../../packages/contracts/src/*"],
       "@qixu/mock/*": ["../../packages/mock/src/*"],
       "@qixu/schemas/*": ["../../packages/schemas/src/*"],
-      "@qixu/domain-runtime/*": ["../../packages/domain-runtime/src/*"]
+      "@qixu/domain-runtime/*": ["../../packages/domain-runtime/src/*"],
+      "@qixu/data-quality/*": ["../../packages/data-quality/src/*"],
+      "@qixu/data-quality": ["../../packages/data-quality/src/index.ts"],
+      "@qixu/data-pipeline/*": ["../../packages/data-pipeline/src/*"],
+      "@qixu/data-pipeline": ["../../packages/data-pipeline/src/index.ts"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

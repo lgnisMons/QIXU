@@ -329,3 +329,46 @@ Every page: Hero + Content + FAQ + CTA + Footer. No isolated empty pages.
 ### Next Steps
 - Sprint-013: Supabase integration
 - Sprint-014: AI Assistant module
+
+## v0.10.0 — 2026-06-28
+
+### Marketing Engine Complete (Sprint-015 / TASK-0015)
+
+**Objective:** Build marketing automation foundation. Assets generated from structured product data — no manual content creation.
+
+**1. Marketing Content Layer — New `@qixu/marketing` Package (4 modules)**
+
+| Module | Purpose |
+|--------|---------|
+| `content.ts` | 5 product features, 4 brand stories, 4 social hook sets, SEO content blocks for admission + assessment |
+| `templates.ts` | Platform templates: Douyin (9:16, 15-60s), Xiaohongshu (3:4), Bilibili (16:9, 2-10min), WeChat (long-form). `generateSocialPost()` function |
+| `scripts.ts` | Dynamic script generator: 4 video types (hero/product/tutorial/brand), scene-by-scene breakdown, overlays. `generateAllScripts()` batch |
+| `assets.ts` | Cover/thumbnail metadata, video meta per platform, chapter generation, `generateAssetBundle()` |
+
+**2. Remotion Integration — New `apps/remotion/`**
+
+4 compositions driven by structured JSON from @qixu/marketing:
+| Composition | Format | Duration | Script Source |
+|-------------|--------|----------|---------------|
+| `HeroVideo` | 1080×1920 (9:16) | 30s | `generateHeroScript()` |
+| `AdmissionVideo` | 1920×1080 (16:9) | 45s | `generateAdmissionScript()` |
+| `AILearningDemo` | 1920×1080 (16:9) | 25s | `generateProductScript("ai-assistant")` |
+| `BrandIntro` | 1920×1080 (16:9) | 60s | `generateBrandIntroScript()` |
+
+Each composition renders animated scenes with gradient backgrounds and text overlays. Render with `npx remotion studio` or `pnpm render:all`.
+
+**3. Dynamic Script Generation**
+Scripts assembled from brand stories, feature content, and platform templates. All copy derived from `@qixu/config` — no duplicated copywriting across marketing and product.
+
+**4. Multi-Platform Support**
+Douyin, Xiaohongshu, Bilibili, WeChat — each with optimized template (aspect ratio, duration, character limits, hashtag format, content style guide).
+
+**5. Engineering**
+- Marketing data reusable — single source in `@qixu/marketing/content`
+- No duplicated copywriting between product and marketing
+- Remotion compositions purely presentation — script data from marketing layer
+- 14 packages typecheck clean
+
+### Next Steps
+- Sprint-013: Supabase integration
+- Sprint-014: AI Assistant module
