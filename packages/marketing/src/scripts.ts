@@ -72,7 +72,7 @@ export function generateHeroScript(): VideoScript {
     voiceover: s.script,
     overlays: [
       { sceneId: "s4", text: brand.slogan, position: "center", animation: "scaleIn" },
-      { sceneId: "s6", text: "免费测评 → qixu.app", position: "bottom", animation: "slideUp" },
+      { sceneId: "s6", text: "免费测评 → qixuxuexi.top", position: "bottom", animation: "slideUp" },
     ],
   };
 }
@@ -112,12 +112,12 @@ export function generateAdmissionScript(): VideoScript {
       { id: "s2", duration: 8, description: "Problem", voiceover: "冲稳保是什么意思？怎么确定冲刺院校和保底院校？费用到底是多少？", visual: "Question marks on screen", transition: "fade" },
       { id: "s3", duration: 10, description: "Demo", voiceover: "输入你的分数和位次，系统自动分析往年录取数据，生成冲刺、稳妥、保底三梯度推荐。每所学校还标注了学费和预估生活成本。", visual: "Screen recording of /admission flow", transition: "slide" },
       { id: "s4", duration: 8, description: "Value", voiceover: "完全免费，没有隐藏收费。推荐结果透明可解释。", visual: "Free badge + transparency icons", transition: "cut" },
-      { id: "s5", duration: 6, description: "CTA", voiceover: "现在就去 qixu.app 试试吧。", visual: "CTA + QR code", transition: "zoom" },
+      { id: "s5", duration: 6, description: "CTA", voiceover: "现在就去 qixuxuexi.top 试试吧。", visual: "CTA + QR code", transition: "zoom" },
     ],
     voiceover: "高考志愿填报，输入分数位次，获取冲稳保三梯度方案。含费用分析，完全免费。",
     overlays: [
       { sceneId: "s3", text: "冲·稳·保 三梯度推荐", position: "bottom-third", animation: "slideUp" },
-      { sceneId: "s5", text: "qixu.app/admission", position: "bottom", animation: "fadeIn" },
+      { sceneId: "s5", text: "qixuxuexi.top/admission", position: "bottom", animation: "fadeIn" },
     ],
   };
 }

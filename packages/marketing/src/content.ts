@@ -13,7 +13,7 @@ const BRAND = {
   slogan: "启于今日，序向未来",
   tagline: "AI 时代学习成长平台",
   philosophy: "启蒙 · 序章 · 未来",
-  url: "https://qixu.app",
+  url: "https://qixuxuexi.top",
 };
 
 const SEO_KEYWORDS = [

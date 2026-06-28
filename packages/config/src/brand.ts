@@ -15,5 +15,5 @@ export const brandConfig = {
   description:
     "启于今日，序向未来。QIXU 启序是一个 AI 时代的学习成长平台，" +
     "提供 AI 学习助手、真人导师陪伴、成长档案和志愿规划服务。",
-  url: "https://qixu.app",
+  url: "https://qixuxuexi.top",
 } as const;
