@@ -12,6 +12,7 @@
  *   growth     — Growth tracking, reports
  *   assessment — Assessments, scoring
  *   user       — User profiles, preferences
+ *   knowledge  — Universities, majors, admission records, recommendation engine
  */
 
 // Learning domain
@@ -80,3 +81,21 @@ export {
 export type {
   UserProfile, UserPreferences, UserStats, RegisterUserInput,
 } from "./user";
+
+// Knowledge domain
+export {
+  mockUniversities, mockMajors, mockAdmissionRecords,
+  getAllUniversities, getUniversityById,
+  getAllMajors, getMajorById,
+  getAdmissionRecords,
+  runRecommendationEngine,
+  KnowledgeDomainError,
+} from "./knowledge";
+export type {
+  University, UniversityTier, UniversityType,
+  Major, MajorCategory, SubjectType,
+  AdmissionRecord,
+  StudentProfile, FinancialLevel,
+  RuleCategory, RuleResult,
+  AdmissionRecommendation, AdmissionRecommendationOutput,
+} from "./knowledge";

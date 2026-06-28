@@ -12,6 +12,7 @@
     "./ai": "./src/ai/index.ts",
     "./growth": "./src/growth/index.ts",
     "./assessment": "./src/assessment/index.ts",
+    "./knowledge": "./src/knowledge/index.ts",
     "./user": "./src/user/index.ts"
   },
   "scripts": {

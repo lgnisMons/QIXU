@@ -220,4 +220,42 @@ Assessment logic in domain layer. React components presentation-only. 10 package
 ### Next Steps
 - Sprint-008: Authentication & Growth Profile
 - Sprint-009: AI Assistant module
-- Sprint-010: Supabase integration
+- Sprint-011: Supabase integration
+
+## v0.7.0 — 2026-06-28
+
+### Admission Foundation Complete (Sprint-010 / TASK-0010)
+
+**Objective:** Build the knowledge foundation for the future AI Admission Recommendation System. No AI model, no external APIs, no real datasets — only architecture, schemas, mock data and recommendation rules.
+
+**1. Knowledge Domain — 4 files**
+| File | Contents |
+|------|----------|
+| `types.ts` | University, Major, AdmissionRecord, StudentProfile schemas + recommendation types |
+| `repository.ts` | 10 mock universities, 15 majors, 35 admission records (Guangdong 2025) |
+| `service.ts` | 8-rule recommendation engine (Reach, Match, Safe, Budget, City, Major, Employment, Risk) |
+| `index.ts` | Public API |
+
+**2. University Schema — 10 Fields**
+id, name, province, city, tier (985/211/双一流/普通本科/专科), type, tags, website, description.
+
+**3. Major Schema — 6 Fields**
+id, name, category (10 categories), employmentDirection, graduateDirection, popularity (1-10).
+
+**4. AdmissionRecord Schema — 9 Fields**
+year, province, subjectType (物理类/历史类), universityId, majorId, lowestScore, lowestRank, quota, tuition.
+
+**5. StudentProfile Schema — 10 Fields**
+province, score, rank, budget, careerPreference, majorPreference, cityPreference, adjustmentAccepted, cooperativeProgramAccepted, familyFinancialLevel.
+
+**6. Recommendation Rule Engine (8 rules)**
+Reach (冲) · Match (稳) · Safe (保) · Budget · City · Major · Employment · Risk. Each rule produces 0-1 score + pass/fail verdict. Composite weighted scoring with tier classification.
+
+**7. Mock Repository** — 10 Guangdong universities × 15 majors × 35 admission records. Repository access functions with filter support.
+
+**8. Engineering** — Domain self-contained. All logic in domain layer. 10 packages typecheck clean. Ready for AI-powered recommendation in Sprint-012.
+
+### Next Steps
+- Sprint-008: Authentication & Growth Profile
+- Sprint-009: AI Assistant module
+- Sprint-011: Supabase integration
