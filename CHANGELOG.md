@@ -57,7 +57,34 @@ QIXU/
 └── decisions/             # Architecture Decision Records
 ```
 
+## v0.2.0 — 2026-06-28
+
+### Brand Homepage Complete (Sprint-003 / TASK-0005)
+
+**8 Homepage Sections Implemented:**
+- **Hero** — Full-height banner with brand tagline "启于今日，序向未来", CTAs, feature indicators
+- **Trust** — Social proof (50,000+ learners, 500+ mentors, 98% satisfaction, 30+ subjects)
+- **Growth Sequence** — Core brand philosophy visualized (启蒙 → 序章 → 未来) with Framer Motion
+- **Four Core Capabilities** — AI 学习助手, 导师全程指导, 成长档案, 个性化路径 with icon cards
+- **Tutor Team** — 6 mock tutor profiles with specialties and bios
+- **AI Showcase** — 3 AI capabilities (智能诊断, 自适应学习, 成长预测) with LangGraph extension points
+- **Success Stories** — 3 placeholder testimonials with Supabase extension points
+- **Final CTA** — Primary-branded call-to-action section
+
+**Technical Highlights:**
+- All sections built with `@qixu/ui` design system components (Section, Container, Card, Badge, Button)
+- Semantic design tokens only (no hardcoded colors)
+- Framer Motion animations: stagger, fade-in-up, card hover (subtle, respects `prefers-reduced-motion`)
+- Mock data layer at `apps/web/src/lib/mock-data.ts` with typed interfaces for future Supabase/LangGraph
+- Responsive: mobile-first, breakpoints at 640px/768px/1024px/1280px
+- TypeScript typecheck passes
+
+**Files:**
+- `apps/web/src/app/page.tsx` — Updated to compose 8 sections
+- `apps/web/src/components/sections/` — 8 new section components
+- `apps/web/src/lib/mock-data.ts` — Mock data with extension point interfaces
+
 ### Next Steps
-- Sprint-002: Homepage content sections
-- Sprint-003: AI Assistant module
 - Sprint-004: Authentication & Growth Profile
+- Sprint-005: AI Assistant module
+- Sprint-006: Supabase integration
