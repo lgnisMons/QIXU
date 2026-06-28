@@ -167,6 +167,32 @@ OG, Twitter Card, JSON-LD, `robots.ts`, `sitemap.ts`, `manifest.ts`.
 `ROUTES` constants, config-driven, full type safety, 7 packages typecheck clean.
 
 ### Next Steps
-- Sprint-006: Authentication & Growth Profile
-- Sprint-007: AI Assistant module
-- Sprint-008: Supabase integration
+- Sprint-007: Authentication & Growth Profile
+- Sprint-008: AI Assistant module
+- Sprint-009: Supabase integration
+
+## v0.5.0 — 2026-06-28
+
+### Domain-Driven Architecture Complete (Sprint-006 / TASK-0008)
+
+**Objective:** Domain-Driven Architecture to support scalable AI education features. No UI changes — system-level only.
+
+**1. Contracts Layer — New `@qixu/contracts`**
+Pure TypeScript interfaces: `LearningPlan`, `TutorMatch`, `AIRecommendation`, `GrowthReport`, `AssessmentResult`, `UserProfile`.
+
+**2. Domain Layer — New `@qixu/domain` (6 self-contained domains)**
+`learning`, `tutor`, `ai`, `growth`, `assessment`, `user` — each with types + mock services. No direct cross-domain imports of internal logic.
+
+**3. Domain Runtime — New `@qixu/domain-runtime`**
+6 simulation scenarios: onboarding, AI diagnostic, tutor matching, assessment, learning path generation, growth reports. All mock — ready for Supabase + LangGraph swap.
+
+**4. Page → Domain Mapping**
+`/ai`→ai, `/tutor`→tutor, `/dashboard`→growth+user, `/tools`→ai+assessment.
+
+**5. Engineering**
+No business logic in React components. Mock first, real backend later. 10 packages typecheck clean.
+
+### Next Steps
+- Sprint-007: Authentication & Growth Profile
+- Sprint-008: AI Assistant module
+- Sprint-009: Supabase integration

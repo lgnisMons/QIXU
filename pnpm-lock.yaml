@@ -124,6 +124,35 @@ importers:
         specifier: ^5.7
         version: 5.7.2
 
+  packages/contracts:
+    devDependencies:
+      typescript:
+        specifier: ^5.7
+        version: 5.7.2
+
+  packages/domain:
+    dependencies:
+      '@qixu/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+    devDependencies:
+      typescript:
+        specifier: ^5.7
+        version: 5.7.2
+
+  packages/domain-runtime:
+    dependencies:
+      '@qixu/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@qixu/domain':
+        specifier: workspace:*
+        version: link:../domain
+    devDependencies:
+      typescript:
+        specifier: ^5.7
+        version: 5.7.2
+
   packages/mock:
     devDependencies:
       typescript:

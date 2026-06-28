@@ -1,0 +1,24 @@
+{
+  "name": "@qixu/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./learning": "./src/learning.ts",
+    "./tutor": "./src/tutor.ts",
+    "./ai": "./src/ai.ts",
+    "./growth": "./src/growth.ts",
+    "./assessment": "./src/assessment.ts",
+    "./user": "./src/user.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "echo \"No lint configured\""
+  },
+  "devDependencies": {
+    "typescript": "^5.7"
+  }
+}
