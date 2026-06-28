@@ -1,59 +1,53 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Section, SectionHeader, SectionTitle } from "@qixu/ui/section";
-import { staggerContainer, fadeInUp, getTransition } from "@/lib/motion";
-import { trustStats, partnerLogos } from "@/lib/mock-data";
+import { Check, Clock } from "lucide-react";
+import { Section, SectionTitle, SectionDescription } from "@qixu/ui/section";
+import { Badge } from "@qixu/ui/badge";
+import { staggerContainer, fadeInUp } from "@/lib/motion";
+import { capabilityBadges } from "@/lib/mock-data";
 
 export function TrustSection() {
   return (
-    <Section background="surface" spacing="lg">
+    <Section background="surface" spacing="md">
       <motion.div
         initial="hidden"
         whileInView="show"
         viewport={{ once: true, margin: "-80px" }}
         variants={staggerContainer}
+        className="text-center"
       >
-        {/* Trust Stats */}
-        <div className="mx-auto grid max-w-4xl grid-cols-2 gap-8 sm:gap-12 md:grid-cols-4">
-          {trustStats.map((stat, index) => (
-            <motion.div
-              key={stat.label}
-              variants={fadeInUp}
-              className="text-center"
-            >
-              <div className="text-3xl font-bold text-primary sm:text-4xl md:text-5xl">
-                {stat.value}
-              </div>
-              <div className="mt-2 text-sm text-muted-foreground">
-                {stat.label}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Divider */}
-        <motion.div
-          variants={fadeInUp}
-          className="mx-auto mt-16 max-w-md"
-        >
-          <p className="text-center text-sm text-muted-foreground">
-            获得教育界广泛认可
+        <motion.div variants={fadeInUp}>
+          <p className="text-sm font-medium text-muted-foreground">
+            我们的核心能力
           </p>
         </motion.div>
 
-        {/* Partner Logos */}
+        {/* Capability Badges */}
         <motion.div
           variants={fadeInUp}
-          className="mt-6 flex flex-wrap items-center justify-center gap-8 opacity-60"
+          className="mx-auto mt-6 grid max-w-2xl grid-cols-2 gap-4 sm:grid-cols-4"
         >
-          {partnerLogos.map((partner) => (
-            <span
-              key={partner.name}
-              className="text-sm font-medium text-muted-foreground"
+          {capabilityBadges.map((badge) => (
+            <div
+              key={badge.label}
+              className="flex flex-col items-center gap-2 rounded-xl border border-border/40 bg-card px-4 py-5 shadow-sm transition-shadow hover:shadow-md"
             >
-              {partner.name}
-            </span>
+              <span className="text-sm font-semibold text-foreground">
+                {badge.label}
+              </span>
+              <Badge
+                variant={badge.status === "active" ? "success" : "secondary"}
+                className="text-xs"
+              >
+                {badge.status === "active" ? (
+                  <Check className="mr-1 h-3 w-3" />
+                ) : (
+                  <Clock className="mr-1 h-3 w-3" />
+                )}
+                {badge.statusLabel}
+              </Badge>
+            </div>
           ))}
         </motion.div>
       </motion.div>

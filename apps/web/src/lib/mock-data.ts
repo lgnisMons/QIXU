@@ -1,44 +1,32 @@
 /**
- * Mock data for the QIXU homepage
+ * Mock data for the QIXU homepage — Reality Layer (Sprint-004)
  *
- * All data is mocked — no backend or API integration yet.
- * Each section's data shape is designed as an extension point
- * for future Supabase tables and LangGraph integrations.
+ * Principles:
+ * - No fabricated people, metrics, or endorsements.
+ * - All mock content is clearly marked as replaceable.
+ * - Each section has a documented extension point.
  *
  * Extension points:
  * - Supabase: Replace mock arrays with `supabase.from('table').select()`
- * - LangGraph: Replace static AI showcase content with dynamic agent state
+ * - LangGraph: Replace static content with dynamic agent state
  */
 
 // ---------------------------------------------------------------------------
-// Trust Section
+// Trust Section — Capability Badges
 // ---------------------------------------------------------------------------
 
-export interface TrustStat {
-  value: string;
+export interface CapabilityBadge {
   label: string;
+  /** "active" | "planned" | "coming-soon" */
+  statusLabel: string;
+  status: "active" | "planned";
 }
 
-export interface PartnerLogo {
-  name: string;
-  /** Future: Supabase public URL */
-  src?: string;
-}
-
-export const trustStats: TrustStat[] = [
-  { value: "50,000+", label: "学习成长者" },
-  { value: "500+", label: "认证导师" },
-  { value: "98%", label: "满意度" },
-  { value: "30+", label: "覆盖学科领域" },
-];
-
-export const partnerLogos: PartnerLogo[] = [
-  { name: "清华大学" },
-  { name: "北京大学" },
-  { name: "中国科学技术大学" },
-  { name: "浙江大学" },
-  { name: "华为教育" },
-  { name: "腾讯课堂" },
+export const capabilityBadges: CapabilityBadge[] = [
+  { label: "AI 学习助手", statusLabel: "已上线", status: "active" },
+  { label: "真人导师陪伴", statusLabel: "已上线", status: "active" },
+  { label: "成长档案", statusLabel: "内测中", status: "active" },
+  { label: "志愿规划", statusLabel: "规划中", status: "planned" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -103,16 +91,16 @@ export const capabilities: Capability[] = [
     icon: "brain",
     title: "AI 学习助手",
     description:
-      "24/7 全天候学习伙伴，智能答疑、自适应推荐、学情分析，让每个学习者都能获得个性化关注。",
-    highlights: ["智能答疑", "自适应推荐", "学情分析", "多模态交互"],
+      "智能答疑、自适应推荐、学情分析。AI 辅助学习者发现问题、巩固知识，让每个学习者都能获得个性化关注。",
+    highlights: ["智能答疑", "自适应推荐", "学情分析"],
   },
   {
     id: "mentor-guidance",
     icon: "users",
-    title: "导师全程指导",
+    title: "真人导师陪伴",
     description:
-      "来自顶尖高校和行业的资深导师，为学习者提供真实、有温度的引导和反馈。",
-    highlights: ["1对1辅导", "进度跟踪", "能力评估", "成长规划"],
+      "来自深圳及周边高校的导师团队，为学习者提供真实、有温度的引导和反馈。AI 与真人协同，互补长短。",
+    highlights: ["1对1指导", "进度跟踪", "成长规划"],
   },
   {
     id: "growth-portfolio",
@@ -120,26 +108,27 @@ export const capabilities: Capability[] = [
     title: "成长档案",
     description:
       "记录学习的每一个重要时刻，可视化成长轨迹，让进步看得见、可分享。",
-    highlights: ["能力雷达图", "学习历程", "成果展示", "证书档案"],
+    highlights: ["学习历程", "成果展示", "能力雷达"],
   },
   {
     id: "personalized-path",
     icon: "route",
-    title: "个性化路径",
+    title: "志愿规划",
     description:
-      "基于 AI 诊断和导师建议，为每个学习者定制独一无二的成长路径，不套用统一模板。",
-    highlights: ["AI 诊断起点", "动态调整路径", "目标导向学习", "多路径探索"],
+      "基于 AI 分析和导师经验，为高中阶段学习者提供高考志愿推荐参考。目前仍在规划测试中。",
+    highlights: ["高考志愿分析", "院校匹配", "专业推荐（规划中）"],
   },
 ];
 
 // ---------------------------------------------------------------------------
-// Tutor Team Section
+// Tutor Team Section — Real Profiles
 // ---------------------------------------------------------------------------
 
 export interface Tutor {
   id: string;
   name: string;
   title: string;
+  school: string;
   avatar: string;
   specialties: string[];
   bio: string;
@@ -149,161 +138,170 @@ export interface Tutor {
 
 export const tutors: Tutor[] = [
   {
-    id: "tutor-1",
-    name: "张明远",
-    title: "数学与逻辑思维导师",
+    id: "tutor-yang-1",
+    name: "杨老师",
+    title: "AI 与编程导师",
+    school: "暨南大学",
     avatar: "",
-    specialties: ["数学思维", "逻辑推理", "竞赛指导"],
-    bio: "清华大学数学博士，10 年教学经验，擅长引导学生建立数学思维框架。",
+    specialties: ["AI 素养", "编程入门", "电子信息"],
+    bio: "暨南大学电子与信息工程硕士，专注 AI 素养教育与编程启蒙，引导学生建立面向未来的技术视野。",
     userId: undefined,
   },
   {
-    id: "tutor-2",
-    name: "李思涵",
-    title: "语言与人文素养导师",
+    id: "tutor-yang-2",
+    name: "杨老师",
+    title: "学业规划导师",
+    school: "南方医科大学",
     avatar: "",
-    specialties: ["中英双语", "阅读写作", "人文素养"],
-    bio: "北京大学中文系毕业，哈佛大学教育学硕士，专注于语言教育的人文关怀。",
-    userId: undefined,
-  },
-  {
-    id: "tutor-3",
-    name: "王子轩",
-    title: "科学实验与探究导师",
-    avatar: "",
-    specialties: ["物理实验", "科学探究", "跨学科项目"],
-    bio: "中国科学技术大学物理学博士，热爱将抽象科学原理转化为有趣的实验。",
-    userId: undefined,
-  },
-  {
-    id: "tutor-4",
-    name: "陈晓雨",
-    title: "编程与 AI 启蒙导师",
-    avatar: "",
-    specialties: ["编程入门", "AI 素养", "创意编程"],
-    bio: "浙江大学计算机硕士，致力于让每个孩子都能理解 AI 时代的基础逻辑。",
-    userId: undefined,
-  },
-  {
-    id: "tutor-5",
-    name: "林若溪",
-    title: "艺术与创造力导师",
-    avatar: "",
-    specialties: ["视觉艺术", "创意设计", "审美素养"],
-    bio: "中央美术学院设计学硕士，倡导通过艺术教育培养创造性思维。",
-    userId: undefined,
-  },
-  {
-    id: "tutor-6",
-    name: "赵一航",
-    title: "学习方法与认知导师",
-    avatar: "",
-    specialties: ["学习科学", "时间管理", "专注力训练"],
-    bio: "北京师范大学认知心理学博士，用科学方法帮助学习者提升学习效率。",
+    specialties: ["学业规划", "学习方法", "医学素养"],
+    bio: "南方医科大学本科，擅长学习方法指导与学业规划，帮助学习者建立科学高效的学习体系。",
     userId: undefined,
   },
 ];
 
+/** Recruitment card — displayed after tutor profiles */
+export const recruitmentCard = {
+  title: "导师招募中",
+  description:
+    "我们正在与深圳大学、香港中文大学（深圳）等高校的优秀教育者建立合作。如果你热爱教育、希望帮助学习者成长，欢迎加入 QIXU 导师团队。",
+  ctaLabel: "了解加入方式",
+  ctaHref: "/contact",
+  /** List of schools we're recruiting from */
+  targetSchools: [
+    "深圳大学",
+    "香港中文大学（深圳）",
+    "南方科技大学",
+    "哈尔滨工业大学（深圳）",
+  ],
+} as const;
+
 // ---------------------------------------------------------------------------
-// AI Showcase Section
+// AI Showcase — Mock Workflow Steps
 // ---------------------------------------------------------------------------
 
-export interface AICapability {
+export interface WorkflowStep {
   id: string;
+  stepNumber: number;
   title: string;
   description: string;
-  icon: "sparkles" | "target" | "trendingUp";
-  features: string[];
-  /** Future: LangGraph agent name / graph id */
-  langGraphAgent?: string;
+  icon: "upload" | "analyze" | "suggestion";
+  /** Mock data shown during this step */
+  mockContent?: string;
 }
 
-export const aiCapabilities: AICapability[] = [
+export const mockWorkflowSteps: WorkflowStep[] = [
   {
-    id: "ai-diagnostic",
-    title: "智能诊断",
-    description:
-      "基于多维度能力模型，精准定位学习者的知识薄弱点和能力边界，生成个性化诊断报告。",
-    icon: "target",
-    features: [
-      "多学科能力测评",
-      "知识图谱分析",
-      "薄弱点定位",
-      "可视化诊断报告",
-    ],
-    langGraphAgent: "diagnostic_agent",
+    id: "upload",
+    stepNumber: 1,
+    title: "上传",
+    description: "上传学习资料或描述学习需求",
+    icon: "upload",
+    mockContent: "支持文档、图片、文字描述等多种输入方式",
   },
   {
-    id: "ai-adaptive",
-    title: "自适应学习",
-    description:
-      "根据学习者的实时表现和状态，动态调整学习内容和难度，实现真正的因材施教。",
-    icon: "sparkles",
-    features: [
-      "实时难度调节",
-      "知识关联推荐",
-      "学习风格适配",
-      "遗忘曲线优化",
-    ],
-    langGraphAgent: "adaptive_agent",
+    id: "analyze",
+    stepNumber: 2,
+    title: "分析",
+    description: "AI 分析学习状态与知识薄弱点",
+    icon: "analyze",
+    mockContent: "基于知识图谱定位薄弱环节，生成分析报告",
   },
   {
-    id: "ai-prediction",
-    title: "成长预测",
-    description:
-      "基于学习数据和认知科学模型，预测学习者的成长曲线，提前发现潜力与风险。",
-    icon: "trendingUp",
-    features: [
-      "成长趋势预测",
-      "潜力领域发现",
-      "风险预警提示",
-      "个性化建议生成",
-    ],
-    langGraphAgent: "prediction_agent",
+    id: "suggestion",
+    stepNumber: 3,
+    title: "建议",
+    description: "生成个性化成长建议与学习路径",
+    icon: "suggestion",
+    mockContent: "结合导师经验，提供可执行的学习改进方案",
   },
 ];
 
-// ---------------------------------------------------------------------------
-// Success Stories (Placeholder)
-// ---------------------------------------------------------------------------
-
-export interface SuccessStory {
-  id: string;
-  studentName: string;
-  studentTitle: string;
-  avatar: string;
-  quote: string;
-  achievement: string;
-  /** Future: Supabase relation */
-  userId?: string;
+/** Mock AI analysis result */
+export interface MockAssessmentResult {
+  strengths: string[];
+  weaknesses: string[];
+  suggestions: string[];
+  updatedAt: string;
 }
 
-export const successStories: SuccessStory[] = [
-  {
-    id: "story-1",
-    studentName: "刘同学",
-    studentTitle: "高中生 · 数学竞赛省一等奖",
-    avatar: "",
-    quote:
-      "在导师的引导下，我发现自己对数学的热爱不仅仅是解题，而是理解背后的逻辑之美。AI 助手帮我找到了最薄弱的知识点，让复习效率提升了很多。",
-    achievement: "数学竞赛省一等奖",
-  },
-  {
-    id: "story-2",
-    studentName: "王同学",
-    studentTitle: "初中生 · 编程爱好者",
-    avatar: "",
-    quote:
-      "从对编程一无所知到能独立完成一个小项目，QIXU 的个性化路径让我按自己的节奏学习，没有压力，只有成就感。",
-    achievement: "完成首个独立编程项目",
-  },
-  {
-    id: "story-3",
-    studentName: "陈同学",
-    studentTitle: "小学生 · 英语能力飞跃",
-    avatar: "",
-    quote:
-      "以前最怕英语课，现在最喜欢。林老师教会了我用有趣的方式记单词，AI 助手像一个随时都在的语伴，让我不再害怕开口。",
-    achievement: "英语能力提升三个等级",
-  },
+export function generateMockAssessment(
+  grade: string,
+  target: string,
+  subject?: string
+): MockAssessmentResult {
+  const base = subject ? `${subject}领域` : "综合";
+  return {
+    strengths: [
+      `${base}基础概念掌握扎实`,
+      "学习主动性较强",
+    ],
+    weaknesses: [
+      `${base}知识体系有待系统化`,
+      "跨学科综合应用能力可进一步提升",
+    ],
+    suggestions: [
+      `建议从${target || "基础巩固"}入手，逐步建立知识框架`,
+      "每周安排2-3次针对性练习",
+      "利用 AI 助手进行薄弱环节的智能检测",
+    ],
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Hero — Quick Growth Assessment
+// ---------------------------------------------------------------------------
+
+export interface AssessmentGrade {
+  value: string;
+  label: string;
+}
+
+export interface AssessmentTarget {
+  value: string;
+  label: string;
+}
+
+export const assessmentGrades: AssessmentGrade[] = [
+  { value: "primary", label: "小学" },
+  { value: "junior", label: "初中" },
+  { value: "senior", label: "高中" },
+  { value: "college", label: "大学及以上" },
 ];
+
+export const assessmentTargets: AssessmentTarget[] = [
+  { value: "score", label: "提升成绩" },
+  { value: "interest", label: "培养兴趣" },
+  { value: "exam", label: "备考冲刺" },
+  { value: "career", label: "职业规划" },
+  { value: "gaokao_volunteer", label: "高考志愿" },
+];
+
+// ---------------------------------------------------------------------------
+// Success Stories — Recruitment CTA
+// ---------------------------------------------------------------------------
+
+export interface StoriesRecruitment {
+  title: string;
+  description: string;
+  subDescription: string;
+  ctaLabel: string;
+  ctaHref: string;
+  benefits: string[];
+}
+
+export const storiesRecruitment: StoriesRecruitment = {
+  title: "首批成长故事招募中",
+  description:
+    "我们正在寻找第一批 QIXU 学习者，免费体验 AI 学习助手与导师陪伴服务，你的成长故事将被真实记录。",
+  subDescription:
+    "未来这里将展示真实的学习者成长历程，而非虚构的推荐语。",
+  ctaLabel: "申请加入",
+  ctaHref: "/contact",
+  benefits: [
+    "免费使用 AI 学习助手",
+    "匹配专属真人导师",
+    "记录完整成长档案",
+    "获得个性化学习报告",
+  ],
+};

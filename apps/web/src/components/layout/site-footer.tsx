@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Mail, Phone, MapPin, Clock } from "lucide-react";
+import { Mail, Phone, MapPin, Clock, MessageCircle } from "lucide-react";
 import { Separator } from "@qixu/ui/separator";
-import { footerNav, contactInfo } from "@/lib/navigation";
+import { footerNav, siteConfig, contactConfig, footerConfig } from "@qixu/config/site";
 
 export function SiteFooter() {
   return (
@@ -11,40 +11,58 @@ export function SiteFooter() {
           {/* Brand Column */}
           <div className="col-span-2 md:col-span-2">
             <Link href="/" className="flex items-center space-x-2">
-              <span className="text-xl font-bold tracking-tight">QIXU</span>
-              <span className="text-sm text-muted-foreground">启序</span>
+              <span className="text-xl font-bold tracking-tight">
+                {siteConfig.nameEn}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {siteConfig.nameZh}
+              </span>
             </Link>
             <p className="mt-3 text-sm text-muted-foreground">
-              启于今日，序向未来。
+              {siteConfig.slogan}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              AI 时代学习成长平台
+              {siteConfig.tagline}
             </p>
 
             {/* Contact Info */}
             <div className="mt-6 space-y-3">
-              <a
-                href={`mailto:${contactInfo.email}`}
-                className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <Mail className="h-4 w-4" />
-                {contactInfo.email}
-              </a>
-              <a
-                href={`tel:${contactInfo.phone}`}
-                className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <Phone className="h-4 w-4" />
-                {contactInfo.phone}
-              </a>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4" />
-                {contactInfo.address}
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="h-4 w-4" />
-                {contactInfo.workHours}
-              </div>
+              {contactConfig.email && (
+                <a
+                  href={`mailto:${contactConfig.email}`}
+                  className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Mail className="h-4 w-4" />
+                  {contactConfig.email}
+                </a>
+              )}
+              {contactConfig.phone && (
+                <a
+                  href={`tel:${contactConfig.phone}`}
+                  className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Phone className="h-4 w-4" />
+                  {contactConfig.phone}
+                </a>
+              )}
+              {contactConfig.address && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <MapPin className="h-4 w-4" />
+                  {contactConfig.address}
+                </div>
+              )}
+              {contactConfig.workHours && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="h-4 w-4" />
+                  {contactConfig.workHours}
+                </div>
+              )}
+              {contactConfig.wechatQr.placeholder && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <MessageCircle className="h-4 w-4" />
+                  微信公众号 · 即将开通
+                </div>
+              )}
             </div>
           </div>
 
@@ -74,27 +92,18 @@ export function SiteFooter() {
 
         <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} QIXU 启序. All rights reserved.
+            {footerConfig.copyright}
           </p>
           <div className="flex items-center gap-4">
-            <Link
-              href="/about"
-              className="text-xs text-muted-foreground hover:text-foreground"
-            >
-              隐私政策
-            </Link>
-            <Link
-              href="/about"
-              className="text-xs text-muted-foreground hover:text-foreground"
-            >
-              服务条款
-            </Link>
-            <Link
-              href="/contact"
-              className="text-xs text-muted-foreground hover:text-foreground"
-            >
-              联系我们
-            </Link>
+            {footerConfig.legalLinks.map((link) => (
+              <Link
+                key={link.title}
+                href={link.href}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                {link.title}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

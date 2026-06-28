@@ -4,15 +4,29 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { seoConfig } from "@qixu/config/site";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   title: {
-    default: "QIXU 启序 - AI 时代学习成长平台",
-    template: "%s | QIXU 启序",
+    default: seoConfig.defaultTitle,
+    template: seoConfig.titleTemplate,
   },
-  description: "启于今日，序向未来。AI 时代学习成长平台",
+  description: seoConfig.description,
+  keywords: seoConfig.keywords,
+  authors: [{ name: "QIXU 启序" }],
+  openGraph: {
+    type: "website",
+    locale: "zh_CN",
+    siteName: "QIXU 启序",
+    title: seoConfig.defaultTitle,
+    description: seoConfig.description,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
@@ -22,7 +36,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
-      <body className={`${inter.variable} min-h-screen bg-background font-sans antialiased`}>
+      <body
+        className={`${inter.variable} min-h-screen bg-background font-sans antialiased`}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

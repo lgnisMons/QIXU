@@ -85,6 +85,56 @@ QIXU/
 - `apps/web/src/lib/mock-data.ts` — Mock data with extension point interfaces
 
 ### Next Steps
-- Sprint-004: Authentication & Growth Profile
-- Sprint-005: AI Assistant module
-- Sprint-006: Supabase integration
+- Sprint-005: Authentication & Growth Profile
+- Sprint-006: AI Assistant module
+- Sprint-007: Supabase integration
+
+## v0.3.0 — 2026-06-28
+
+### Reality Layer Complete (Sprint-004 / TASK-0006)
+
+**Objective:** Transform homepage from marketing prototype into trustworthy beta product.
+
+**Key Changes:**
+
+| Before | After |
+|--------|-------|
+| Fake stats (50,000+, 98%) | 4 capability badges (AI助手/导师/档案/志愿规划) |
+| 6 fake tutor profiles | 2 real profiles (杨老师 x2) + recruitment card |
+| Fake partner logos (清华/北大...) | Removed entirely |
+| Static AI cards | Interactive mock workflow (上传→分析→建议) |
+| Fake testimonials | "首批成长故事招募中" CTA |
+| Hardcoded footer contact | Centralized `@qixu/config/site` config |
+
+**New Features:**
+- **Quick Growth Assessment** — Hero right panel: select grade/target/subject → mock analysis result
+- **Interactive AI Workflow** — Clickable 3-step flow with expandable detail cards
+- **Centralized Site Config** — `packages/config/src/site.ts`: site identity, SEO, contact, navigation, social links, footer — all UI consumes this
+
+**Technical Highlights:**
+- No fabricated people, metrics, or endorsements
+- All mock content clearly marked as replaceable
+- Contact info: centralized, configurable (no hardcoded values)
+- Assessment flow: mock-only, no LLM integration
+- SEO metadata: keywords naturally included (深圳家教, AI学习助手, AI工具课堂, 高考志愿推荐)
+- TypeScript typecheck passes
+
+**Files Changed:**
+- `packages/config/src/site.ts` — New centralized config
+- `packages/config/src/index.ts` — Export site config
+- `packages/config/package.json` — Add site export
+- `apps/web/src/app/layout.tsx` — SEO metadata with keywords
+- `apps/web/src/components/layout/site-footer.tsx` — Config-driven footer
+- `apps/web/src/lib/navigation.ts` — Re-export from config
+- `apps/web/src/lib/mock-data.ts` — Real data rewrite
+- `apps/web/src/components/sections/hero-section.tsx` — +Assessment card
+- `apps/web/src/components/sections/trust-section.tsx` — Capability badges
+- `apps/web/src/components/sections/tutor-team-section.tsx` — Real tutors + recruitment
+- `apps/web/src/components/sections/ai-showcase-section.tsx` — Interactive workflow
+- `apps/web/src/components/sections/success-stories-section.tsx` — Recruitment CTA
+- `specs/004-reality-layer/README.md` — Spec document
+
+### Next Steps
+- Sprint-005: Authentication & Growth Profile
+- Sprint-006: AI Assistant module
+- Sprint-007: Supabase integration

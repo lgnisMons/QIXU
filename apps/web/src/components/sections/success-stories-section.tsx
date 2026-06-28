@@ -1,47 +1,20 @@
 "use client";
 
-import { Quote, User } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Star, Users, Sparkles, Target, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@qixu/ui/card";
-import { Section, SectionHeader, SectionTitle, SectionDescription } from "@qixu/ui/section";
-import { Badge } from "@qixu/ui/badge";
-import { staggerContainer, fadeInUp, cardHover } from "@/lib/motion";
-import type { SuccessStory } from "@/lib/mock-data";
-import { successStories } from "@/lib/mock-data";
+import { Card, CardContent, CardFooter } from "@qixu/ui/card";
+import {
+  Section,
+  SectionHeader,
+  SectionTitle,
+  SectionDescription,
+} from "@qixu/ui/section";
+import { Button } from "@qixu/ui/button";
+import { staggerContainer, fadeInUp } from "@/lib/motion";
+import { storiesRecruitment } from "@/lib/mock-data";
 
-function StoryCard({ story }: { story: SuccessStory }) {
-  return (
-    <motion.div variants={fadeInUp} whileHover={cardHover} transition={{ duration: 0.2, ease: "easeOut" }}>
-      <Card className="relative h-full border-border/50 bg-card transition-shadow hover:shadow-lg">
-        <CardContent className="p-6">
-          {/* Quote icon */}
-          <Quote className="mb-4 h-8 w-8 text-primary/20" />
-
-          <blockquote className="mb-6 text-sm leading-relaxed text-muted-foreground">
-            &ldquo;{story.quote}&rdquo;
-          </blockquote>
-
-          <div className="flex items-center gap-3 border-t border-border/50 pt-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-              <User className="h-4 w-4 text-muted-foreground/40" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-semibold">
-                {story.studentName}
-              </div>
-              <div className="truncate text-xs text-muted-foreground">
-                {story.studentTitle}
-              </div>
-            </div>
-            <Badge variant="success" className="shrink-0 text-xs">
-              {story.achievement}
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-}
+const benefitIcons = [Sparkles, Users, BarChart3, Target];
 
 export function SuccessStoriesSection() {
   return (
@@ -58,7 +31,7 @@ export function SuccessStoriesSection() {
           </motion.div>
           <motion.div variants={fadeInUp}>
             <SectionDescription>
-              每一个学习者的成长都值得被看见。这里是他们的真实故事。
+              {storiesRecruitment.subDescription}
             </SectionDescription>
           </motion.div>
         </motion.div>
@@ -69,24 +42,51 @@ export function SuccessStoriesSection() {
         whileInView="show"
         viewport={{ once: true, margin: "-80px" }}
         variants={staggerContainer}
-        className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3 lg:gap-8"
+        className="mx-auto max-w-2xl"
       >
-        {successStories.map((story) => (
-          <StoryCard key={story.id} story={story} />
-        ))}
-      </motion.div>
+        <motion.div variants={fadeInUp}>
+          <Card className="border-border/50 bg-card shadow-sm">
+            <CardContent className="p-8 text-center">
+              {/* Icon */}
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+                <Star className="h-8 w-8 text-primary" />
+              </div>
 
-      {/* Placeholder indicator & extension point */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        className="mx-auto mt-10 max-w-2xl rounded-lg border border-dashed border-border/60 bg-muted/30 p-4 text-center"
-      >
-        <p className="text-xs text-muted-foreground/50">
-          🏗️ 更多真实故事即将上线 · Future: Supabase success_stories table ·
-          User-submitted stories
-        </p>
+              <h3 className="text-xl font-bold text-foreground">
+                {storiesRecruitment.title}
+              </h3>
+
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                {storiesRecruitment.description}
+              </p>
+
+              {/* Benefits */}
+              <div className="mt-6 grid grid-cols-2 gap-3 text-left sm:grid-cols-4">
+                {storiesRecruitment.benefits.map((benefit, index) => {
+                  const Icon = benefitIcons[index] || Star;
+                  return (
+                    <div
+                      key={benefit}
+                      className="flex flex-col items-center gap-2 rounded-lg border border-border/40 bg-surface p-3 text-center"
+                    >
+                      <Icon className="h-4 w-4 text-primary" />
+                      <span className="text-xs text-foreground">{benefit}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+
+            <CardFooter className="justify-center pb-8">
+              <Button asChild size="lg" className="min-w-[200px] shadow-md">
+                <Link href={storiesRecruitment.ctaHref}>
+                  {storiesRecruitment.ctaLabel}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </CardFooter>
+          </Card>
+        </motion.div>
       </motion.div>
     </Section>
   );
