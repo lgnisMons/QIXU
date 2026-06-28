@@ -1,0 +1,39 @@
+讨论
+↓
+
+修改规范
+
+↓
+
+更新蓝图
+
+↓
+
+更新线框
+
+↓
+
+开发
+
+五个阶段后开发
+
+第一层远看像：Q；第二层近看像：∞；第三层再近像：道路；第四层里面有芯片线路、AI，但是：不能明显要隐藏；第五层整个图形向右上成长、启航。
+
+一、品牌
+
+品牌：启序
+
+Website Slogan：启于今日，序向未来。（确定）
+
+Brand Philosophy：启蒙 · 序章 · 未来。（确定）
+
+Brand World：Growth Sequence（成长序列）
+
+现在不要急着写代码。我建议按照下面的顺序推进，每完成一步就冻结一次，不轻易回头：
+Constitution（项目宪章）：确立不会轻易改变的原则。（现在）
+六个 System 文档：完成 Brand、Design、Information、Experience、Data、Engineering。（下一步）
+网站蓝图（Site Map）：把所有页面、后台、SEO 落地页画出来。
+全站线框图（Wireframe）：前台 + 后台全部低保真。
+Logo + Design Kit：Logo、组件库、图标、Rive、苹小浣规范。
+Agent + MD 文件：根据已经冻结的规范生成 Agent，而不是先写 Agent。
+Claude Code 开发：正式进入编码阶段。

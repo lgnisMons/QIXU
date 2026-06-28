@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "plugins": [{ "name": "next" }],
+    "paths": {
+      "@/*": ["./src/*"],
+      "@qixu/ui/*": ["../../packages/ui/src/*"],
+      "@qixu/config/*": ["../../packages/config/src/*"],
+      "@qixu/types/*": ["../../packages/types/src/*"],
+      "@qixu/utils/*": ["../../packages/utils/src/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}

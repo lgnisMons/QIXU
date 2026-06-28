@@ -1,0 +1,28 @@
+{
+  "name": "qixu",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "start": "pnpm --filter web start",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.4.0",
+    "@types/node": "^22",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "prettier": "^3.4",
+    "prettier-plugin-tailwindcss": "^0.6",
+    "typescript": "^5.7"
+  },
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=18.18.0"
+  }
+}
