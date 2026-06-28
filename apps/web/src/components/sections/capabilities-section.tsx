@@ -1,11 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { Brain, Users, BarChart3, Route } from "lucide-react";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@qixu/ui/card";
 import { Section, SectionHeader, SectionTitle, SectionDescription } from "@qixu/ui/section";
 import { Badge } from "@qixu/ui/badge";
-import { staggerContainer, fadeInUp, cardHover, cardMotionProps } from "@/lib/motion";
+import { staggerContainer, fadeInUp, cardHover } from "@/lib/motion";
 import type { Capability } from "@/lib/mock-data";
 import { capabilities } from "@/lib/mock-data";
 
@@ -16,15 +17,18 @@ const iconMap = {
   route: Route,
 } as const;
 
+const linkMap: Record<Capability["id"], string> = {
+  "ai-assistant": "/assessment",
+  "mentor-guidance": "/tutor",
+  "growth-portfolio": "/growth",
+  "personalized-path": "/admission",
+};
+
 const iconContainerClassMap: Record<Capability["id"], string> = {
-  "ai-assistant":
-    "mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary",
-  "mentor-guidance":
-    "mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-success/10 text-success",
-  "growth-portfolio":
-    "mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-warning/10 text-warning",
-  "personalized-path":
-    "mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary",
+  "ai-assistant": "mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary",
+  "mentor-guidance": "mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-success/10 text-success",
+  "growth-portfolio": "mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-warning/10 text-warning",
+  "personalized-path": "mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary",
 } as const;
 
 function CapabilityCard({ capability }: { capability: Capability }) {
@@ -32,7 +36,8 @@ function CapabilityCard({ capability }: { capability: Capability }) {
 
   return (
     <motion.div variants={fadeInUp} whileHover={cardHover} transition={{ duration: 0.2, ease: "easeOut" }}>
-      <Card className="h-full border-border/50 bg-card transition-shadow hover:shadow-lg">
+      <Link href={linkMap[capability.id] ?? "/"} className="block">
+      <Card className="h-full cursor-pointer border-border/50 bg-card transition-all hover:shadow-lg hover:border-primary/20">
         <CardHeader className="pb-4">
           <div className={iconContainerClassMap[capability.id]}>
             <Icon className="h-6 w-6" />
@@ -52,6 +57,7 @@ function CapabilityCard({ capability }: { capability: Capability }) {
           </div>
         </CardContent>
       </Card>
+      </Link>
     </motion.div>
   );
 }

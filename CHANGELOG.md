@@ -288,6 +288,44 @@ New `simulateAdmissionRecommendation()` scenario in `@qixu/domain-runtime` — o
 All recommendation logic in knowledge domain. React components presentation-only. Engine replaceable. 10 packages typecheck clean. Ready for public beta launch.
 
 ### Next Steps
-- Sprint-008: Authentication & Growth Profile
-- Sprint-009: AI Assistant module
-- Sprint-011: Supabase integration
+- Sprint-012: Product Completion & Platform Polish
+- Sprint-013: Supabase integration
+
+## v0.9.0 — 2026-06-28
+
+### Admission Platform Complete (Sprint-012 / TASK-0012)
+
+**Objective:** Transform QIXU Admission from a landing page into a production-ready education product. Focus: product completeness, navigation, information architecture.
+
+**1. Global Navigation Upgrade**
+Updated header: 首页 · AI学习 · 高考志愿 · 导师团队 · AI工具课堂 · 成长社区 · 关于启序. Right side: "开始测评" + "进入成长空间". All from config.
+
+**2. Homepage → Product Portal**
+Hero CTAs: "AI学习测评" (/assessment) + "免费高考志愿推荐" (/admission). Four capability cards now clickable: AI学习助手→/assessment, 真人导师→/tutor, 成长档案→/growth, 志愿规划→/admission.
+
+**3. Admission Product — Tab-Based Navigation** (6 tabs)
+Overview / Assessment (form) / Recommendation (results) / FAQ / Roadmap / Policies. Every tab has real content. No dead interactions.
+
+**4. New Product Pages**
+| Route | Hero | Content | FAQ | CTA |
+|-------|------|---------|-----|-----|
+| `/growth` | ✅ | 4 feature cards | 3 items | ✅ |
+| `/tools` | ✅ | 3 tool categories | 3 items | ✅ |
+| `/community` | ✅ | 3 community features | 3 items | ✅ |
+| `/about` | ✅ | 3 brand values | 3 items | ✅ |
+
+Every page: Hero + Content + FAQ + CTA + Footer. No isolated empty pages.
+
+**5. Data Quality Layer — New `@qixu/data-quality` Package**
+5 modules: `source.ts` (provenance), `validator.ts` (quality checks), `version.ts` (semantic versioning), `confidence.ts` (trust scoring), `update.ts` (scheduling). Every future dataset supports source, updatedAt, confidence, version.
+
+**6. UX Polish**
+- No dead links — all homepage cards, hero CTAs, header buttons go to real destinations
+- No empty pages — /growth, /tools, /community, /about all have full content
+- No placeholder interactions — every visible entry leads to a real page
+- 11 packages typecheck clean
+- All routes return HTTP 200
+
+### Next Steps
+- Sprint-013: Supabase integration
+- Sprint-014: AI Assistant module

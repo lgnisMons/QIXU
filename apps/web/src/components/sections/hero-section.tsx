@@ -272,8 +272,8 @@ export function HeroSection() {
               className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start"
             >
               <Button size="lg" asChild className="min-w-[160px] shadow-md">
-                <Link href="/ai">
-                  开始体验
+                <Link href="/assessment">
+                  AI学习测评
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
@@ -283,7 +283,7 @@ export function HeroSection() {
                 asChild
                 className="min-w-[160px]"
               >
-                <Link href="/about">了解更多</Link>
+                <Link href="/admission">免费高考志愿推荐</Link>
               </Button>
             </motion.div>
 

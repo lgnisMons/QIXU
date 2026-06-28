@@ -67,10 +67,10 @@ export function SiteHeader() {
           <ThemeToggle />
           <div className="hidden items-center gap-2 md:flex">
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/contact">联系我们</Link>
+              <Link href="/assessment">开始测评</Link>
             </Button>
-            <Button size="sm" asChild>
-              <Link href="/ai">开始体验</Link>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/dashboard">成长空间</Link>
             </Button>
           </div>
 
@@ -124,13 +124,13 @@ export function SiteHeader() {
               <Separator className="my-4" />
               <div className="flex flex-col gap-2">
                 <Button variant="outline" asChild className="w-full">
-                  <Link href="/contact" onClick={() => setOpen(false)}>
-                    联系我们
+                  <Link href="/assessment" onClick={() => setOpen(false)}>
+                    开始测评
                   </Link>
                 </Button>
                 <Button asChild className="w-full">
-                  <Link href="/ai" onClick={() => setOpen(false)}>
-                    开始体验
+                  <Link href="/dashboard" onClick={() => setOpen(false)}>
+                    进入成长空间
                   </Link>
                 </Button>
               </div>
