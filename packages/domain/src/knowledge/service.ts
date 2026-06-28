@@ -1,13 +1,16 @@
 /**
  * Knowledge domain — recommendation rule engine (mock).
  *
- * 8 rule categories: Reach, Match, Safe, Budget, City, Major, Employment, Risk.
+ * 7 rule categories: Reach, Match, Safe, Budget, Major, Employment, Risk.
  * Tier boundaries (clean partition, no overlap):
  *   Reach: rankRatio 0.70 — 1.00 (student at or below cutoff)
  *   Match: rankRatio 1.00 — 1.50 (student above cutoff)
  *   Safe:  rankRatio 1.50+          (student well above cutoff)
  *
  * No AI/LLM — pure rule-based scoring. Extensible for future ML models.
+ *
+ * Province filtering is handled in the UI layer (result page filter),
+ * not in the engine — the engine searches all available data.
  */
 
 import { generateId } from "../utils";
@@ -24,15 +27,14 @@ import {
 // Rule weight configuration — single place to tune the engine
 // ---------------------------------------------------------------------------
 
-const RULE_WEIGHTS: Record<RuleCategory, number> = {
-  reach: 0.15,
-  match: 0.20,
-  safe: 0.10,
+const RULE_WEIGHTS: Record<string, number> = {
+  reach: 0.18,
+  match: 0.22,
+  safe: 0.12,
   budget: 0.15,
-  city: 0.10,
   major: 0.15,
-  employment: 0.05,
-  risk: 0.10,
+  employment: 0.06,
+  risk: 0.12,
 };
 
 // ---------------------------------------------------------------------------
@@ -57,17 +59,18 @@ export function runRecommendationEngine(
   student: StudentProfile,
   options?: {
     maxRecommendations?: number;
-    province?: string;
     year?: number;
     subjectType?: "物理类" | "历史类";
+    provinceFilter?: string[];
   }
 ): AdmissionRecommendationOutput {
-  const province = options?.province ?? student.province;
   const year = options?.year ?? 2025;
   const subjectType = options?.subjectType ?? student.subjectType;
   const max = options?.maxRecommendations ?? 15;
+  const provinceFilter = options?.provinceFilter;
 
-  const records = getAdmissionRecords({ province, year, subjectType });
+  // Query ALL provinces — province filtering is a UI concern
+  let records = getAdmissionRecords({ year, subjectType });
   const universities = getAllUniversities();
   const majors = getAllMajors();
 
@@ -89,6 +92,7 @@ export function runRecommendationEngine(
       majorId: major.id,
       universityName: university.name,
       universityCity: university.city,
+      universityProvince: university.province,
       majorName: major.name,
       tuition: record.tuition,
       tier,
@@ -100,8 +104,15 @@ export function runRecommendationEngine(
 
   scored.sort((a, b) => b.compositeScore - a.compositeScore);
 
-  const top = scored.slice(0, max);
-  const summary = buildSummary(top, student, province);
+  // Apply province filter if specified (UI-level filtering)
+  let filtered = scored;
+  if (provinceFilter && provinceFilter.length > 0) {
+    filtered = scored.filter((r) => provinceFilter.includes(r.universityProvince));
+  }
+
+  filtered.sort((a, b) => b.compositeScore - a.compositeScore);
+  const top = filtered.slice(0, max);
+  const summary = buildSummary(top, student);
 
   return {
     student,
@@ -126,7 +137,6 @@ function evaluateAllRules(
     evaluateMatch(student, record),
     evaluateSafe(student, record),
     evaluateBudget(student, record),
-    evaluateCity(student, university),
     evaluateMajor(student, major),
     evaluateEmployment(student, major),
     evaluateRisk(student, record),
@@ -222,30 +232,6 @@ function evaluateBudget(student: StudentProfile, record: AdmissionRecord): RuleR
     detail = `学费超出预算较多`;
   }
   return { category: "budget", score, label: "预算", detail, passed: ratio >= 1.0 };
-}
-
-/** City: city preference & province match */
-function evaluateCity(student: StudentProfile, university: University): RuleResult {
-  const cityMatch = student.cityPreference.length === 0 ||
-    student.cityPreference.some((c) => university.city.includes(c) || c.includes(university.city));
-  const sameProvince = student.province === university.province;
-
-  let score: number;
-  let detail: string;
-  if (cityMatch && sameProvince) {
-    score = 1.0;
-    detail = `${university.city}在你的意向中，且同在${university.province}`;
-  } else if (cityMatch) {
-    score = 0.85;
-    detail = `${university.city}在你的意向城市列表中`;
-  } else if (student.cityPreference.length === 0) {
-    score = 0.7;
-    detail = `未设置城市偏好，${university.city}可作为备选`;
-  } else {
-    score = 0.2;
-    detail = `${university.city}不在你的意向中`;
-  }
-  return { category: "city", score, label: "城市", detail, passed: cityMatch || student.cityPreference.length === 0 };
 }
 
 /** Major: category preference match */
@@ -358,7 +344,6 @@ function buildBreakdown(
 ): AdmissionRecommendation["breakdown"] {
   const matchRule = findRule(rules, "match");
   const budgetRule = findRule(rules, "budget");
-  const cityRule = findRule(rules, "city");
   const majorRule = findRule(rules, "major");
   const employmentRule = findRule(rules, "employment");
   const riskRule = findRule(rules, "risk");
@@ -367,7 +352,6 @@ function buildBreakdown(
     scoreGap: student.score - record.lowestScore,
     rankGap: record.lowestRank - student.rank,
     budgetFit: budgetRule.passed,
-    cityMatch: cityRule.passed,
     majorMatch: majorRule.passed,
     employmentScore: Math.round(employmentRule.score * 10),
     riskLevel: riskRule.passed ? "low" : riskRule.score >= 0.4 ? "medium" : "high",
@@ -377,21 +361,22 @@ function buildBreakdown(
 function buildSummary(
   recommendations: AdmissionRecommendation[],
   student: StudentProfile,
-  province: string,
 ): string {
   const reach = recommendations.filter((r) => r.tier === "reach").length;
   const match = recommendations.filter((r) => r.tier === "match").length;
   const safe = recommendations.filter((r) => r.tier === "safe").length;
 
+  // Count unique provinces
+  const provinces = [...new Set(recommendations.map((r) => r.universityProvince))];
+
   const parts = [
-    `基于你的${student.score}分(位次${student.rank.toLocaleString()}，${student.subjectType}，${province})`,
-    `${recommendations.length === 0 ? "暂无" : `共${recommendations.length}条`}推荐：`,
+    `基于你的${student.score}分(位次${student.rank.toLocaleString()}，${student.subjectType}，${student.province})`,
+    `${recommendations.length === 0 ? "暂无" : `覆盖${provinces.length}省·共${recommendations.length}条`}推荐：`,
     `${safe}保底 · ${match}稳妥 · ${reach}冲刺。`,
-    student.cityPreference.length > 0 ? `城市：${student.cityPreference.join("、")}` : "",
-    student.majorPreference.length > 0 ? `专业：${student.majorPreference.join("、")}` : "",
+    student.majorPreference.length > 0 ? `专业偏好：${student.majorPreference.join("、")}` : "",
     recommendations.length === 0
-      ? `当前数据暂不支持你在${province}的${student.subjectType}组合，正在努力扩展中。`
-      : "建议结合兴趣与职业规划综合考虑。",
+      ? `当前数据暂不支持你的${student.subjectType}组合，正在努力扩展中。`
+      : "可在结果页按省份筛选。建议结合兴趣与职业规划综合考虑。",
   ];
   return parts.filter(Boolean).join("");
 }

@@ -202,7 +202,6 @@ export function simulateGrowthReport(input: {
 
 export function simulateAdmissionRecommendation(student: StudentProfile) {
   const result = runRecommendationEngine(student, {
-    province: student.province,
     subjectType: student.subjectType,
     maxRecommendations: 20,
   });

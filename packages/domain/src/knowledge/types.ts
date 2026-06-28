@@ -102,7 +102,6 @@ export interface StudentProfile {
   budget: number;
   careerPreference: string[];
   majorPreference: MajorCategory[];
-  cityPreference: string[];
   adjustmentAccepted: boolean;
   cooperativeProgramAccepted: boolean;
   familyFinancialLevel: FinancialLevel;
@@ -138,6 +137,7 @@ export interface AdmissionRecommendation {
   majorId: string;
   universityName: string;
   universityCity: string;
+  universityProvince: string;
   majorName: string;
   tuition: number;
   tier: "reach" | "match" | "safe";
@@ -147,7 +147,6 @@ export interface AdmissionRecommendation {
     scoreGap: number; // positive = above cutoff, negative = below
     rankGap: number; // positive = better rank, negative = worse
     budgetFit: boolean;
-    cityMatch: boolean;
     majorMatch: boolean;
     employmentScore: number; // 0–10
     riskLevel: "low" | "medium" | "high";

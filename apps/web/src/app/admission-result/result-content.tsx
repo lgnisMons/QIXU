@@ -29,7 +29,6 @@ export function AdmissionResultContent() {
 
       // FIX: Use the subjectType from the profile, not hardcoded
       const result = runRecommendationEngine(parsed, {
-        province: parsed.province,
         subjectType: parsed.subjectType,
         maxRecommendations: 20,
       });

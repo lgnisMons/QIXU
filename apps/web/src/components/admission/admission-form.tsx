@@ -4,14 +4,14 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight, ArrowLeft, Check, Send, MapPin, BookOpen, Target,
-  Wallet, Building, GraduationCap, Briefcase, Shield, Handshake, Info,
+  Wallet, GraduationCap, Briefcase, Shield, Handshake, Info,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@qixu/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@qixu/ui/card";
 import type { StudentProfile, MajorCategory, SubjectType } from "@qixu/domain";
 import {
-  ADMISSION_PROVINCES, ADMISSION_CITIES,
+  ADMISSION_PROVINCES,
   MAJOR_CATEGORY_OPTIONS, CAREER_OPTIONS,
   SUBJECT_TYPES, BUDGET_OPTIONS, getScoreRange,
 } from "@/lib/admission-data";
@@ -36,7 +36,6 @@ export function AdmissionForm() {
   const [score, setScore] = useState(550);
   const [rank, setRank] = useState(50000);
   const [budget, setBudget] = useState(60000);
-  const [cityPref, setCityPref] = useState<string[]>([]);
   const [majorPref, setMajorPref] = useState<MajorCategory[]>([]);
   const [careerPref, setCareerPref] = useState<string[]>([]);
   const [adjustment, setAdjustment] = useState(true);
@@ -74,7 +73,6 @@ export function AdmissionForm() {
       province, subjectType, score, rank, budget,
       careerPreference: careerPref,
       majorPreference: majorPref,
-      cityPreference: cityPref,
       adjustmentAccepted: adjustment,
       cooperativeProgramAccepted: cooperative,
       familyFinancialLevel: budget >= 120000 ? "high" : budget >= 30000 ? "medium" : "low",
@@ -170,14 +168,6 @@ export function AdmissionForm() {
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium"><Building className="mr-1.5 inline h-3.5 w-3.5 text-primary" />意向城市（可多选，最多5个）</label>
-                    <div className="flex flex-wrap gap-2">
-                      {ADMISSION_CITIES.map((c) => (
-                        <button key={c} onClick={() => toggle(cityPref, setCityPref, c, 5)} className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${cityPref.includes(c) ? "border-primary/40 bg-primary/5 text-primary" : "border-border/50 text-muted-foreground hover:border-primary/20"}`}>{c}</button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
                     <label className="mb-1.5 block text-sm font-medium"><GraduationCap className="mr-1.5 inline h-3.5 w-3.5 text-primary" />专业偏好（可多选，最多5个）</label>
                     <div className="flex flex-wrap gap-2">
                       {MAJOR_CATEGORY_OPTIONS.map((m) => (
@@ -204,7 +194,6 @@ export function AdmissionForm() {
                   <ReviewRow label="高考分数" value={`${score}分 (满分${scoreRange.max})`} accent="primary" />
                   <ReviewRow label="全省位次" value={`第${rank.toLocaleString()}名`} accent="primary" />
                   <ReviewRow label="预算" value={BUDGET_OPTIONS.find((b) => b.value === budget)?.label ?? ""} />
-                  {cityPref.length > 0 && <ReviewRow label="意向城市" value={cityPref.join("、")} />}
                   {majorPref.length > 0 && <ReviewRow label="专业偏好" value={majorPref.join("、")} />}
                   {careerPref.length > 0 && <ReviewRow label="职业兴趣" value={careerPref.join("、")} />}
                   <hr className="border-border/40" />

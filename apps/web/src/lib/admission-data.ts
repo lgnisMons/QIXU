@@ -19,11 +19,14 @@ export const ADMISSION_PROVINCES: string[] = [
   ...new Set(getAllUniversities().map((u) => u.province)),
 ].sort();
 
-// ---- Cities (derived from university data) ----
+// ---- All 31 provinces for result page filter ----
 
-export const ADMISSION_CITIES: string[] = [
-  ...new Set(getAllUniversities().map((u) => u.city)),
-].sort();
+export const ALL_PROVINCES: string[] = [
+  "广东","北京","上海","浙江","江苏","四川","湖北","湖南",
+  "山东","河南","福建","安徽","陕西","重庆","辽宁","吉林",
+  "黑龙江","江西","河北","山西","广西","海南","贵州","云南",
+  "甘肃","天津","宁夏","新疆","内蒙古","青海","西藏",
+];
 
 // ---- Major Categories ----
 

@@ -63,9 +63,8 @@ function StudentCard({ student }: { student: StudentProfile }) {
           <Stat label="年度预算" value={`≤${formatMoney(student.budget)}`} />
           <Stat label="家庭经济" value={student.familyFinancialLevel === "low" ? "普通" : student.familyFinancialLevel === "medium" ? "中等" : "宽裕"} />
         </div>
-        {(student.cityPreference.length > 0 || student.majorPreference.length > 0) && (
+        {student.majorPreference.length > 0 && (
           <div className="mt-3 space-y-1.5 border-t border-border/30 pt-3">
-            {student.cityPreference.length > 0 && <div className="text-xs text-muted-foreground"><MapPin className="mr-1 inline h-3 w-3" />城市偏好：{student.cityPreference.join("、")}</div>}
             {student.majorPreference.length > 0 && <div className="text-xs text-muted-foreground"><GraduationCap className="mr-1 inline h-3 w-3" />专业偏好：{student.majorPreference.join("、")}</div>}
             {student.careerPreference.length > 0 && <div className="text-xs text-muted-foreground"><Briefcase className="mr-1 inline h-3 w-3" />职业兴趣：{student.careerPreference.join("、")}</div>}
           </div>
@@ -90,16 +89,14 @@ function AIExplanation({ rec }: { rec: AdmissionRecommendation }) {
   const [open, setOpen] = useState(false);
   const matchRule = rec.rules.find((r) => r.category === "match");
   const budgetRule = rec.rules.find((r) => r.category === "budget");
-  const cityRule = rec.rules.find((r) => r.category === "city");
   const riskRule = rec.rules.find((r) => r.category === "risk");
   const riskLabel = rec.breakdown.riskLevel === "low" ? "较低" : rec.breakdown.riskLevel === "medium" ? "中等" : "较高";
 
   // Build plain-Chinese explanation from rule engine results
   const matchDesc = (matchRule?.score ?? 0) >= 0.8 ? "录取概率较高" : (matchRule?.score ?? 0) >= 0.5 ? "有一定录取把握" : "录取存在一定难度";
   const budgetDesc = (budgetRule?.passed ?? false) ? "学费在你预算范围内" : "学费略超你的预算";
-  const cityDesc = (cityRule?.passed ?? false) ? "城市符合你的偏好" : "城市不在你的偏好中";
 
-  const explanation = `根据历年录取数据分析，${rec.universityName}的${rec.majorName}专业去年录取位次为${formatNumber(rec.breakdown.rankGap > 0 ? rec.breakdown.rankGap : 0)}名以内。你的位次(${formatNumber(Math.abs(rec.breakdown.rankGap))})${rec.breakdown.rankGap >= 0 ? "在此范围内" : "略低于此线"}，${matchDesc}。${budgetDesc}（学费¥${formatMoney(rec.tuition)}/年）。${cityDesc}。综合风险${riskLabel}。此为${rec.tier === "safe" ? "保底" : rec.tier === "match" ? "稳妥" : "冲刺"}推荐。`;
+  const explanation = `根据历年录取数据分析，${rec.universityName}(${rec.universityProvince}${rec.universityCity})的${rec.majorName}专业去年录取位次为${formatNumber(rec.breakdown.rankGap > 0 ? rec.breakdown.rankGap : 0)}名以内。你的位次(${formatNumber(Math.abs(rec.breakdown.rankGap))})${rec.breakdown.rankGap >= 0 ? "在此范围内" : "略低于此线"}，${matchDesc}。${budgetDesc}（学费¥${formatMoney(rec.tuition)}/年）。综合风险${riskLabel}。此为${rec.tier === "safe" ? "保底" : rec.tier === "match" ? "稳妥" : "冲刺"}推荐。`;
 
   return (
     <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
@@ -146,7 +143,7 @@ function RecCard({ rec, index }: { rec: AdmissionRecommendation; index: number }
               </div>
               <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1"><GraduationCap className="h-3 w-3" />{rec.majorName}</span>
-                <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{rec.universityCity}</span>
+                <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{rec.universityProvince} {rec.universityCity}</span>
                 <span className="flex items-center gap-1"><Star className="h-3 w-3" />匹配度 {rec.compositeScore}%</span>
               </div>
             </div>
@@ -172,11 +169,6 @@ function RecCard({ rec, index }: { rec: AdmissionRecommendation; index: number }
               <span className="flex items-center gap-1 rounded bg-success/10 px-2 py-0.5 text-success"><CheckCircle2 className="h-3 w-3" />预算匹配</span>
             ) : (
               <span className="flex items-center gap-1 rounded bg-warning/10 px-2 py-0.5 text-warning"><AlertTriangle className="h-3 w-3" />预算超支</span>
-            )}
-            {rec.breakdown.cityMatch ? (
-              <span className="flex items-center gap-1 rounded bg-success/10 px-2 py-0.5 text-success"><CheckCircle2 className="h-3 w-3" />城市匹配</span>
-            ) : (
-              <span className="flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-muted-foreground">城市不匹配</span>
             )}
             {rec.breakdown.majorMatch ? (
               <span className="flex items-center gap-1 rounded bg-success/10 px-2 py-0.5 text-success"><CheckCircle2 className="h-3 w-3" />专业匹配</span>
