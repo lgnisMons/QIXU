@@ -108,9 +108,9 @@ export const realUniversities = [
 // Helper: generate records across 3 years
 function mk(uniId: string, data23: [number, number], data24: [number, number], data25: [number, number], estTuition = 6850, estQuota = 80): AdmissionRecord[] {
   return [
-    { id: `r-${uniId}-23`, year: 2023, province: "广东", subjectType: "物理类", universityId: uniId, majorId: "m-unified", lowestScore: data23[0], lowestRank: data23[1], quota: estQuota, tuition: estTuition },
-    { id: `r-${uniId}-24`, year: 2024, province: "广东", subjectType: "物理类", universityId: uniId, majorId: "m-unified", lowestScore: data24[0], lowestRank: data24[1], quota: estQuota, tuition: estTuition },
-    { id: `r-${uniId}-25`, year: 2025, province: "广东", subjectType: "物理类", universityId: uniId, majorId: "m-unified", lowestScore: data25[0], lowestRank: data25[1], quota: estQuota, tuition: estTuition },
+    { id: `r-${uniId}-23`, year: 2023, province: "广东", subjectType: "物理类", universityId: uniId, majorId: "m-unified", lowestScore: data23[0], lowestRank: data23[1], quota: estQuota, tuition: estTuition, dataQuality: "real" },
+    { id: `r-${uniId}-24`, year: 2024, province: "广东", subjectType: "物理类", universityId: uniId, majorId: "m-unified", lowestScore: data24[0], lowestRank: data24[1], quota: estQuota, tuition: estTuition, dataQuality: "real" },
+    { id: `r-${uniId}-25`, year: 2025, province: "广东", subjectType: "物理类", universityId: uniId, majorId: "m-unified", lowestScore: data25[0], lowestRank: data25[1], quota: estQuota, tuition: estTuition, dataQuality: "real" },
   ];
 }
 
@@ -198,9 +198,9 @@ export const realAdmissionRecords: AdmissionRecord[] = [
 // Helper for history records
 function mkHist(uniId: string, data23: [number, number], data24: [number, number], data25: [number, number], estTuition = 6850, estQuota = 40): AdmissionRecord[] {
   return [
-    { id: `rh-${uniId}-23`, year: 2023, province: "广东", subjectType: "历史类", universityId: uniId, majorId: "m-unified", lowestScore: data23[0], lowestRank: data23[1], quota: estQuota, tuition: estTuition },
-    { id: `rh-${uniId}-24`, year: 2024, province: "广东", subjectType: "历史类", universityId: uniId, majorId: "m-unified", lowestScore: data24[0], lowestRank: data24[1], quota: estQuota, tuition: estTuition },
-    { id: `rh-${uniId}-25`, year: 2025, province: "广东", subjectType: "历史类", universityId: uniId, majorId: "m-unified", lowestScore: data25[0], lowestRank: data25[1], quota: estQuota, tuition: estTuition },
+    { id: `rh-${uniId}-23`, year: 2023, province: "广东", subjectType: "历史类", universityId: uniId, majorId: "m-unified", lowestScore: data23[0], lowestRank: data23[1], quota: estQuota, tuition: estTuition, dataQuality: "real" },
+    { id: `rh-${uniId}-24`, year: 2024, province: "广东", subjectType: "历史类", universityId: uniId, majorId: "m-unified", lowestScore: data24[0], lowestRank: data24[1], quota: estQuota, tuition: estTuition, dataQuality: "real" },
+    { id: `rh-${uniId}-25`, year: 2025, province: "广东", subjectType: "历史类", universityId: uniId, majorId: "m-unified", lowestScore: data25[0], lowestRank: data25[1], quota: estQuota, tuition: estTuition, dataQuality: "real" },
   ];
 }
 
@@ -302,17 +302,17 @@ export const collegeUniversities: University[] = [
 // College physical science records helper
 function mkCol(uniId: string, data23: [number, number], data24: [number, number], data25: [number, number], estTuition = 6410, estQuota = 60): AdmissionRecord[] {
   return [
-    { id: `rc-${uniId}-23`, year: 2023, province: "广东", subjectType: "物理类", universityId: uniId, majorId: "m-unified", lowestScore: data23[0], lowestRank: data23[1], quota: estQuota, tuition: estTuition },
-    { id: `rc-${uniId}-24`, year: 2024, province: "广东", subjectType: "物理类", universityId: uniId, majorId: "m-unified", lowestScore: data24[0], lowestRank: data24[1], quota: estQuota, tuition: estTuition },
-    { id: `rc-${uniId}-25`, year: 2025, province: "广东", subjectType: "物理类", universityId: uniId, majorId: "m-unified", lowestScore: data25[0], lowestRank: data25[1], quota: estQuota, tuition: estTuition },
+    { id: `rc-${uniId}-23`, year: 2023, province: "广东", subjectType: "物理类", universityId: uniId, majorId: "m-unified", lowestScore: data23[0], lowestRank: data23[1], quota: estQuota, tuition: estTuition, dataQuality: "real" },
+    { id: `rc-${uniId}-24`, year: 2024, province: "广东", subjectType: "物理类", universityId: uniId, majorId: "m-unified", lowestScore: data24[0], lowestRank: data24[1], quota: estQuota, tuition: estTuition, dataQuality: "real" },
+    { id: `rc-${uniId}-25`, year: 2025, province: "广东", subjectType: "物理类", universityId: uniId, majorId: "m-unified", lowestScore: data25[0], lowestRank: data25[1], quota: estQuota, tuition: estTuition, dataQuality: "real" },
   ];
 }
 
 function mkColHist(uniId: string, data23: [number, number|null], data24: [number, number|null], data25: [number, number|null], estTuition = 6410, estQuota = 40): AdmissionRecord[] {
   const result: AdmissionRecord[] = [];
-  if (data23[1] !== null) result.push({ id: `rch-${uniId}-23`, year: 2023, province: "广东", subjectType: "历史类", universityId: uniId, majorId: "m-unified", lowestScore: data23[0], lowestRank: data23[1]!, quota: estQuota, tuition: estTuition });
-  if (data24[1] !== null) result.push({ id: `rch-${uniId}-24`, year: 2024, province: "广东", subjectType: "历史类", universityId: uniId, majorId: "m-unified", lowestScore: data24[0], lowestRank: data24[1]!, quota: estQuota, tuition: estTuition });
-  if (data25[1] !== null) result.push({ id: `rch-${uniId}-25`, year: 2025, province: "广东", subjectType: "历史类", universityId: uniId, majorId: "m-unified", lowestScore: data25[0], lowestRank: data25[1]!, quota: estQuota, tuition: estTuition });
+  if (data23[1] !== null) result.push({ id: `rch-${uniId}-23`, year: 2023, province: "广东", subjectType: "历史类", universityId: uniId, majorId: "m-unified", lowestScore: data23[0], lowestRank: data23[1]!, quota: estQuota, tuition: estTuition, dataQuality: "real" });
+  if (data24[1] !== null) result.push({ id: `rch-${uniId}-24`, year: 2024, province: "广东", subjectType: "历史类", universityId: uniId, majorId: "m-unified", lowestScore: data24[0], lowestRank: data24[1]!, quota: estQuota, tuition: estTuition, dataQuality: "real" });
+  if (data25[1] !== null) result.push({ id: `rch-${uniId}-25`, year: 2025, province: "广东", subjectType: "历史类", universityId: uniId, majorId: "m-unified", lowestScore: data25[0], lowestRank: data25[1]!, quota: estQuota, tuition: estTuition, dataQuality: "real" });
   return result;
 }
 

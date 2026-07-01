@@ -11,7 +11,7 @@ import { Button } from "@qixu/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@qixu/ui/card";
 import type { StudentProfile, MajorCategory, SubjectType } from "@qixu/domain";
 import {
-  ADMISSION_PROVINCES,
+  ADMISSION_PROVINCES, REAL_DATA_PROVINCES,
   MAJOR_CATEGORY_OPTIONS, CAREER_OPTIONS,
   SUBJECT_TYPES, BUDGET_OPTIONS, getScoreRange,
   checkScoreRankConsistency,
@@ -132,11 +132,18 @@ export function AdmissionForm() {
                   <div>
                     <label className="mb-1.5 block text-sm font-medium"><MapPin className="mr-1.5 inline h-3.5 w-3.5 text-primary" />省份</label>
                     <div className="flex flex-wrap gap-2">
-                      {ADMISSION_PROVINCES.map((p) => (
-                        <button key={p} onClick={() => setProvince(p)} className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${province === p ? "border-primary/40 bg-primary/5 text-primary" : "border-border/50 text-muted-foreground hover:border-primary/20"}`}>{p}</button>
-                      ))}
+                      {ADMISSION_PROVINCES.map((p) => {
+                        const hasRealData = REAL_DATA_PROVINCES.includes(p);
+                        return (
+                          <button key={p} onClick={() => setProvince(p)} className={`group relative rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${province === p ? "border-primary/40 bg-primary/5 text-primary" : "border-border/50 text-muted-foreground hover:border-primary/20"}`}>
+                            {p}
+                            {hasRealData && <span className="ml-1 text-[9px] text-emerald-600">●真实</span>}
+                            {!hasRealData && <span className="ml-1 text-[9px] text-amber-600">●模拟</span>}
+                          </button>
+                        );
+                      })}
                     </div>
-                    <p className="mt-1.5 text-[11px] text-muted-foreground/60"><Info className="mr-1 inline h-3 w-3" />当前支持{ADMISSION_PROVINCES.length}个省份，更多省份数据持续扩展中</p>
+                    <p className="mt-1.5 text-[11px] text-muted-foreground/60"><Info className="mr-1 inline h-3 w-3" />广东省已覆盖真实录取数据，其他省份为模拟数据，持续扩展中</p>
                   </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium">科目类型</label>
@@ -200,7 +207,7 @@ export function AdmissionForm() {
                     />
                     <p className="mt-1 text-[10px] text-muted-foreground/60">输入正整数（全省排名），排名越靠前数字越小</p>
                     {province && score > 0 && rank >= 1 && (() => {
-                      const warn = checkScoreRankConsistency(province, score, rank);
+                      const warn = checkScoreRankConsistency(province, score, rank, subjectType);
                       return warn ? (
                         <p className="mt-1.5 text-[11px] text-warning flex items-center gap-1">
                           <Info className="h-3 w-3 shrink-0" />{warn}

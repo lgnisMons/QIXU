@@ -29,7 +29,7 @@ const FAQ_ITEMS = [
 const EXAMPLE_PARAMS = new URLSearchParams({
   pv: "广东", st: "物理类", sc: "580", rk: "32000", bg: "60000",
   mp: "工学,理学", cp: "AI研发,互联网企业,数据分析",
-  aj: "1", co: "0",
+  aj: "1", co: "0", ex: "1",
 }).toString();
 
 const ROADMAP_ITEMS = [

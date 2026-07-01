@@ -15,7 +15,7 @@
 
 import { generateId } from "../utils";
 import type {
-  StudentProfile, University, Major, AdmissionRecord,
+  StudentProfile, University, UniversityType, Major, AdmissionRecord,
   RuleResult, RuleCategory, AdmissionRecommendation,
   AdmissionRecommendationOutput,
 } from "./types";
@@ -107,7 +107,7 @@ export function runRecommendationEngine(
     if (count >= 2) continue;
     perUniCount.set(university.id, count + 1);
 
-    const { rules, riskLevel } = evaluateAllRules(student, record, major);
+    const { rules, riskLevel } = evaluateAllRules(student, record, major, university);
     const composite = computeComposite(rules);
     const tier = classifyTier(rules);
 
@@ -121,7 +121,7 @@ export function runRecommendationEngine(
       universityProvince: university.province,
       universityTier: university.tier,
       universityType: university.type,
-      majorName: major.id === "m-unified" ? "参考投档线（全校最低）" : major.name,
+      majorName: major.id === "m-unified" ? "参考往年最低录取位次" : major.name,
       tuition: record.tuition,
       tier,
       compositeScore: composite,
@@ -133,7 +133,22 @@ export function runRecommendationEngine(
   }
 
   scored.sort((a, b) => b.compositeScore - a.compositeScore);
-  const top = scored.slice(0, max);
+  let top = scored.slice(0, max);
+
+  // Low score auto-supplement: add college/vocational safety net for students near or below cutoff
+  const LOW_SCORE_THRESHOLD = 460; // Approximate undergraduate cutoff line
+  if (student.score < LOW_SCORE_THRESHOLD) {
+    // Collect college records NOT already in the top list (avoid duplicates)
+    const topIds = new Set(top.map((r) => r.id));
+    const collegeRecs = scored.filter((r) => r.universityTier === "专科" && !topIds.has(r.id));
+    const topColleges = collegeRecs.slice(0, 3);
+    const markedColleges = topColleges.map((r) => ({
+      ...r,
+      tier: "college" as const,
+    }));
+    top = [...top, ...markedColleges];
+  }
+
   const summary = buildSummary(top, student);
 
   return {
@@ -152,6 +167,7 @@ function evaluateAllRules(
   student: StudentProfile,
   record: AdmissionRecord,
   major: Major,
+  university?: University,
 ): { rules: RuleResult[]; riskLevel: "low" | "medium" | "high" } {
   const risk = evaluateRisk(student, record);
   return {
@@ -159,8 +175,8 @@ function evaluateAllRules(
       evaluateReach(student, record),
       evaluateMatch(student, record),
       evaluateSafe(student, record),
-      evaluateBudget(student, record),
-      evaluateMajor(student, major),
+      evaluateBudget(student, record, university),
+      evaluateMajor(student, major, university),
       evaluateEmployment(student, major),
       risk.rule,
     ],
@@ -211,7 +227,7 @@ function evaluateMatch(student: StudentProfile, record: AdmissionRecord): RuleRe
     detail = `位次刚好越过录取线，有一定把握但需关注分数线波动`;
   } else if (rankRatio > 2.00) {
     score = 0.4;
-    detail = `位次远超录取线，建议作为保底而非稳妥`;
+    detail = `位次远超录取线，录取基本确定，建议重点关注稳妥范围内更高层次的学校`;
   } else {
     score = 0.1;
     detail = `位次未达录取线，不属于稳妥选择`;
@@ -238,10 +254,37 @@ function evaluateSafe(student: StudentProfile, record: AdmissionRecord): RuleRes
 }
 
 /** Budget: tuition + estimated living cost vs student budget */
-function evaluateBudget(student: StudentProfile, record: AdmissionRecord): RuleResult {
-  // Conservative estimate: living costs ~¥15k/year in most Chinese cities
-  const assumedLivingCost = 15000;
-  const totalCost = record.tuition + assumedLivingCost;
+
+// City-level living cost reference (CNY/year)
+const CITY_LIVING_COST: Record<string, number> = {
+  "深圳": 24000, "北京": 26000, "上海": 26000, "广州": 20000,
+  "杭州": 20000, "武汉": 16000, "南京": 18000, "成都": 15000,
+  "长沙": 15000, "青岛": 16000, "郑州": 14000, "福州": 16000,
+  "珠海": 18000, "东莞": 16000, "佛山": 16000, "厦门": 20000,
+  "汕头": 14000, "湛江": 13000, "茂名": 12000, "江门": 13000,
+  "惠州": 14000, "肇庆": 12000, "韶关": 12000, "梅州": 11000,
+  "潮州": 12000, "中山": 16000, "金华": 14000, "镇江": 14000,
+  "湘潭": 12000, "宁波": 18000, "苏州": 18000, "无锡": 17000,
+  "重庆": 15000, "西安": 14000, "天津": 18000, "大连": 15000,
+  "沈阳": 14000, "哈尔滨": 13000, "长春": 13000, "济南": 16000,
+  "合肥": 15000, "南昌": 14000, "昆明": 13000, "贵阳": 13000,
+  "南宁": 13000, "海口": 15000, "兰州": 12000, "银川": 12000,
+  "乌鲁木齐": 12000, "呼和浩特": 13000, "西宁": 11000, "拉萨": 12000,
+  "太原": 13000, "石家庄": 13000, "廊坊": 14000, "烟台": 14000,
+};
+const DEFAULT_LIVING_COST = 15000;
+
+function getLivingCost(city: string): number {
+  for (const [k, v] of Object.entries(CITY_LIVING_COST)) {
+    if (city.includes(k)) return v;
+  }
+  return DEFAULT_LIVING_COST;
+}
+
+function evaluateBudget(student: StudentProfile, record: AdmissionRecord, university?: University): RuleResult {
+  // Use city-specific living cost if university info is available
+  const livingCost = university ? getLivingCost(university.city) : DEFAULT_LIVING_COST;
+  const totalCost = record.tuition + livingCost;
   const ratio = student.budget / Math.max(totalCost, 1);
 
   let score: number;
@@ -251,14 +294,14 @@ function evaluateBudget(student: StudentProfile, record: AdmissionRecord): RuleR
 
   if (ratio >= 2.5 * strictness) {
     score = 0.95;
-    detail = `学费¥${formatK(record.tuition)}/年 + 生活费≈¥${formatK(assumedLivingCost)}/年，合计¥${formatK(totalCost)}/年，预算充足`;
+    detail = `学费¥${formatK(record.tuition)}/年 + 生活费≈¥${formatK(livingCost)}/年，合计¥${formatK(totalCost)}/年，预算充足`;
   } else if (ratio >= 1.3 * strictness) {
     score = 0.85;
-    detail = `学费¥${formatK(record.tuition)}/年 + 生活费≈¥${formatK(assumedLivingCost)}/年，合计¥${formatK(totalCost)}/年，在预算范围内`;
+    detail = `学费¥${formatK(record.tuition)}/年 + 生活费≈¥${formatK(livingCost)}/年，合计¥${formatK(totalCost)}/年，在预算范围内`;
   } else if (ratio >= passedThreshold) {
     score = 0.6;
     const warn = student.familyFinancialLevel === "low" ? "（家庭经济一般，建议谨慎考虑）" : "";
-    detail = `学费¥${formatK(record.tuition)}/年 + 生活费≈¥${formatK(assumedLivingCost)}/年，合计¥${formatK(totalCost)}/年，预算基本够用${warn}`;
+    detail = `学费¥${formatK(record.tuition)}/年 + 生活费≈¥${formatK(livingCost)}/年，合计¥${formatK(totalCost)}/年，预算基本够用${warn}`;
   } else if (ratio >= 0.7) {
     score = 0.35;
     detail = `合计费用¥${formatK(totalCost)}/年略超预算¥${formatK(student.budget)}/年，需考虑经济因素`;
@@ -270,36 +313,81 @@ function evaluateBudget(student: StudentProfile, record: AdmissionRecord): RuleR
 }
 
 /** Major: category preference match */
-function evaluateMajor(student: StudentProfile, major: Major): RuleResult {
-  // m-unified (投档线) means "any major at this school" — don't penalize for major mismatch
+
+// University type to major category mapping for better matching with m-unified records
+const UNI_TYPE_TO_MAJORS: Record<UniversityType, string[]> = {
+  "综合": ["工学", "理学", "文学", "经济学", "管理学", "法学", "教育学"],
+  "理工": ["工学", "理学"],
+  "师范": ["教育学", "文学", "理学", "历史学", "哲学"],
+  "医药": ["医学", "药学", "护理学", "公共卫生与预防医学"],
+  "农林": ["农学", "理学", "工学"],
+  "政法": ["法学", "政治学", "社会学"],
+  "财经": ["经济学", "管理学", "金融学"],
+  "语言": ["文学", "外国语言文学", "翻译"],
+  "艺术": ["艺术学", "设计学", "音乐与舞蹈学", "戏剧与影视学"],
+  "体育": ["教育学", "体育学"],
+};
+
+function calcUniversityTypeMatch(
+  uniType: UniversityType,
+  prefs: string[],
+): { score: number; passed: boolean; desc: string } {
+  if (prefs.length === 0) {
+    return { score: 0.6, passed: true, desc: "未设置专业偏好" };
+  }
+  const matchMajors = UNI_TYPE_TO_MAJORS[uniType] ?? [];
+  const overlap = prefs.filter((p) => matchMajors.includes(p)).length;
+  const ratio = overlap / prefs.length;
+
+  if (ratio >= 0.6) return { score: 0.85, passed: true, desc: `${uniType}类院校与你的专业偏好高度匹配` };
+  if (ratio >= 0.3) return { score: 0.7, passed: true, desc: `${uniType}类院校与你的专业偏好部分匹配` };
+  if (overlap > 0) return { score: 0.55, passed: false, desc: `${uniType}类院校与你的偏好关联度一般` };
+  return { score: 0.4, passed: false, desc: `${uniType}类院校与你的偏好关联度较低` };
+}
+
+function evaluateMajor(student: StudentProfile, major: Major, university?: University): RuleResult {
+  // m-unified (投档线) means "any major at this school" — use university type to infer match
   const isUnified = major.id === "m-unified";
-  const prefMatch = isUnified ||
-    student.majorPreference.length === 0 ||
-    student.majorPreference.includes(major.category);
+  const prefMatch = !isUnified &&
+    (student.majorPreference.length === 0 ||
+    student.majorPreference.includes(major.category));
 
   let score: number;
   let detail: string;
-  if (isUnified) {
+  let passed: boolean;
+
+  if (isUnified && university) {
+    // For 投档线 data, use university type to infer major match quality
+    const typeMatch = calcUniversityTypeMatch(university.type, student.majorPreference);
+    score = typeMatch.score;
+    detail = `${university.name}是${university.type}类院校，${typeMatch.desc}`;
+    passed = typeMatch.passed;
+  } else if (isUnified) {
+    // Fallback: no university info, use default score
     score = 0.7;
-    detail = `按学校投档线计算，具体专业需入校后分流或选择`;
+    detail = `按学校最低录取位次计算，具体专业需入校后分流或选择`;
+    passed = true;
   } else if (prefMatch && student.majorPreference.length > 0) {
     score = 1.0;
     detail = `「${major.name}」(${major.category})符合你的专业偏好`;
+    passed = true;
   } else if (student.majorPreference.length === 0) {
     score = 0.6;
     detail = `未设置专业偏好，「${major.name}」可作为选项`;
+    passed = true;
   } else {
     score = 0.15;
     detail = `「${major.name}」(${major.category})不在你的偏好中`;
+    passed = false;
   }
-  return { category: "major", score, label: "专业", detail, passed: prefMatch };
+  return { category: "major", score, label: "专业", detail, passed };
 }
 
 /** Employment: career direction alignment */
 function evaluateEmployment(student: StudentProfile, major: Major): RuleResult {
   // m-unified has no employment direction
   if (major.id === "m-unified") {
-    return { category: "employment", score: 0.5, label: "就业", detail: "投档线数据，专业就业方向需入校后确定", passed: true };
+    return { category: "employment", score: 0.5, label: "就业", detail: "最低录取位次参考，具体就业方向需在入校确定专业后了解", passed: true };
   }
 
   const hasPref = student.careerPreference.length > 0;
@@ -346,7 +434,7 @@ function evaluateRisk(
   }
   // FIX: Not accepting adjustment increases risk when close to cutoff
   if (!student.adjustmentAccepted && rankRatio < 1.10) {
-    riskFactors.push("未接受专业调剂，进档后存在退档风险");
+    riskFactors.push("未接受专业调剂，可能因专业满额而被学校退回档案");
   }
 
   let riskLevel: "low" | "medium" | "high";
@@ -419,11 +507,12 @@ function buildSummary(
   const reach = recommendations.filter((r) => r.tier === "reach").length;
   const match = recommendations.filter((r) => r.tier === "match").length;
   const safe = recommendations.filter((r) => r.tier === "safe").length;
+  const college = recommendations.filter((r) => r.tier === "college").length;
 
   const parts = [
     `基于你的${student.score}分(位次${student.rank.toLocaleString()}，${student.subjectType}，${student.province})`,
     `${recommendations.length === 0 ? "暂无" : `共${recommendations.length}条`}推荐：`,
-    `${safe}保底 · ${match}稳妥 · ${reach}冲刺。`,
+    `${safe}保底 · ${match}稳妥 · ${reach}冲刺${college > 0 ? ` · ${college}专科保底` : ""}。`,
     student.majorPreference.length > 0 ? `专业偏好：${student.majorPreference.join("、")}。` : "",
     recommendations.length === 0
       ? `当前${student.province}${student.subjectType}数据暂不足，正在努力扩展中。`

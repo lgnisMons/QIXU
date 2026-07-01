@@ -19,6 +19,9 @@ export const ADMISSION_PROVINCES: string[] = [
   ...new Set(getAllUniversities().map((u) => u.province)),
 ].sort();
 
+/** Provinces that have REAL (official) admission data */
+export const REAL_DATA_PROVINCES: string[] = ["广东"];
+
 // ---- All 31 provinces for result page filter ----
 
 export const ALL_PROVINCES: string[] = [
@@ -98,11 +101,12 @@ export function checkScoreRankConsistency(
   province: string,
   score: number,
   rank: number,
+  subjectType?: string,
 ): string | null {
-  // Approximate rank ranges per score band for 物理类 (most common case)
-  // Data from Guangdong 2025 物理类 official distribution
+  // Approximate rank ranges per score band for Guangdong province
   if (province === "广东") {
-    const ranges = [
+    // 物理类 rank ranges (Guangdong 2025 official distribution)
+    const physicsRanges = [
       { minScore: 660, maxRank: 2500 },
       { minScore: 640, maxRank: 6000 },
       { minScore: 620, maxRank: 14000 },
@@ -117,19 +121,38 @@ export function checkScoreRankConsistency(
       { minScore: 440, maxRank: 290000 },
       { minScore: 420, maxRank: 330000 },
     ];
+    // 历史类 rank ranges (Guangdong 2025 approximate)
+    const historyRanges = [
+      { minScore: 640, maxRank: 800 },
+      { minScore: 620, maxRank: 2000 },
+      { minScore: 600, maxRank: 5000 },
+      { minScore: 580, maxRank: 10000 },
+      { minScore: 560, maxRank: 18000 },
+      { minScore: 540, maxRank: 30000 },
+      { minScore: 520, maxRank: 45000 },
+      { minScore: 500, maxRank: 60000 },
+      { minScore: 480, maxRank: 80000 },
+      { minScore: 460, maxRank: 95000 },
+      { minScore: 440, maxRank: 110000 },
+      { minScore: 420, maxRank: 125000 },
+    ];
+
+    const ranges = subjectType === "历史类" ? historyRanges : physicsRanges;
+    const defaultMaxRank = subjectType === "历史类" ? 150000 : 400000;
+
     // Find the appropriate range and check
-    let expectedMaxRank = 400000;
+    let expectedMaxRank = defaultMaxRank;
     for (const r of ranges) {
       if (score >= r.minScore) { expectedMaxRank = r.maxRank; break; }
     }
     if (rank > expectedMaxRank * 1.5) {
       return `分数 ${score} 通常对应位次 ≤${expectedMaxRank.toLocaleString()}，你输入的位次 ${rank.toLocaleString()} 偏大，请确认是否正确`;
     }
-    if (score >= 600 && rank > 80000) {
-      return `高分段（${score}分）通常位次不会超过8万名，请检查分数或位次是否填反了`;
+    if (score >= 600 && rank > (subjectType === "历史类" ? 20000 : 80000)) {
+      return `高分段（${score}分）通常位次不会这么靠后，请检查分数或位次是否填反了`;
     }
-    if (score <= 450 && rank < 30000) {
-      return `低分段（${score}分）通常位次不会低于3万名，请检查分数或位次是否填反了`;
+    if (score <= 450 && rank < (subjectType === "历史类" ? 5000 : 30000)) {
+      return `低分段（${score}分）通常位次不会这么靠前，请检查分数或位次是否填反了`;
     }
   }
 

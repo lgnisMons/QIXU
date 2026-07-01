@@ -85,6 +85,8 @@ export interface AdmissionRecord {
   lowestRank: number;
   quota: number;
   tuition: number; // CNY per year
+  /** 数据质量：real=官方真实数据, estimated=基于真实数据估算, mock=模拟数据 */
+  dataQuality?: "real" | "estimated" | "mock";
 }
 
 // ---------------------------------------------------------------------------
@@ -142,7 +144,7 @@ export interface AdmissionRecommendation {
   universityType: UniversityType;
   majorName: string;
   tuition: number;
-  tier: "reach" | "match" | "safe";
+  tier: "reach" | "match" | "safe" | "college";
   compositeScore: number; // 0–100
   /** The admission record cutoff data (for AI explanation accuracy) */
   lowestRank: number;

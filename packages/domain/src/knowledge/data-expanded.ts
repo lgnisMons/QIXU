@@ -79,6 +79,7 @@ function genRecords(
         lowestScore: um.score + mod.scoreShift,
         lowestRank: um.rank + mod.rankShift,
         quota: um.quota, tuition: um.tuition,
+        dataQuality: "mock",
       });
     }
   }
@@ -98,6 +99,7 @@ function genRecords(
         lowestScore: um.score + mod.scoreShift - 35,
         lowestRank: Math.round(um.rank * 0.35) + mod.rankShift,
         quota: Math.round(um.quota * 0.4), tuition: um.tuition,
+        dataQuality: "mock",
       });
     }
   }

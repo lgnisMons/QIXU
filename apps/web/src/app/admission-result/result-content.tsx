@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, FileText, RefreshCw, ExternalLink } from "lucide-react";
+import { ArrowLeft, FileText, RefreshCw, ExternalLink, Copy, Check } from "lucide-react";
 import { Button } from "@qixu/ui/button";
 import { Breadcrumb } from "@qixu/ui/breadcrumb";
 import { PageHeader } from "@qixu/ui/page-header";
@@ -77,6 +77,19 @@ export function AdmissionResultContent() {
   const [output, setOutput] = useState<AdmissionRecommendationOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
+  const [copied, setCopied] = useState(false);
+  const isExample = searchParams.get("ex") === "1";
+
+  const copyShareLink = async () => {
+    try {
+      const url = window.location.href;
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      console.error("Failed to copy:", e);
+    }
+  };
 
   // Parse profile once from URL params (priority) or sessionStorage (fallback)
   const resolvedProfile = useMemo((): StudentProfile | null => {
@@ -169,7 +182,14 @@ export function AdmissionResultContent() {
       <PageSection background="default" spacing="md">
         <div className="mx-auto max-w-3xl">
           {output ? (
-            <AdmissionReport output={output} />
+            <div className="space-y-4">
+              {isExample && (
+                <div className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-center text-sm text-primary">
+                  <strong>📌 示例数据</strong>：广东省 · 物理类 · 580分/32000名 · 仅供体验参考
+                </div>
+              )}
+              <AdmissionReport output={output} />
+            </div>
           ) : (
             <div className="flex items-center justify-center py-16">
               <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -179,6 +199,13 @@ export function AdmissionResultContent() {
           <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Button variant="outline" asChild>
               <Link href="/admission"><ArrowLeft className="mr-1.5 h-4 w-4" />重新填报</Link>
+            </Button>
+            <Button variant="outline" onClick={copyShareLink}>
+              {copied ? (
+                <><Check className="mr-1.5 h-4 w-4" />已复制</>
+              ) : (
+                <><Copy className="mr-1.5 h-4 w-4" />复制分享链接</>
+              )}
             </Button>
             <Button asChild>
               <Link href="/assessment">AI 学习测评<ArrowLeft className="ml-1.5 h-4 w-4 rotate-180" /></Link>

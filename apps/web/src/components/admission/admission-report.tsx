@@ -6,7 +6,7 @@ import {
   TrendingUp, CheckCircle2, ShieldCheck, AlertTriangle,
   DollarSign, MapPin, GraduationCap, Briefcase, Building,
   ArrowRight, BarChart3, Star, Download, Camera, UserCheck, MessageCircle,
-  Sparkles, ChevronDown, ChevronUp, Filter, ArrowUpDown,
+  Sparkles, ChevronDown, ChevronUp, Filter, ArrowUpDown, Info,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardContent } from "@qixu/ui/card";
@@ -14,6 +14,7 @@ import { Badge } from "@qixu/ui/badge";
 import { Button } from "@qixu/ui/button";
 import { staggerContainer, fadeInUp } from "@/lib/motion";
 import type { AdmissionRecommendationOutput, AdmissionRecommendation, StudentProfile } from "@qixu/domain";
+import { REAL_DATA_PROVINCES } from "@/lib/admission-data";
 
 // === City living cost lookup (from domain data would be ideal; here as fallback) ===
 
@@ -145,15 +146,19 @@ function RecCard({ rec, index, studentRank }: { rec: AdmissionRecommendation; in
   // Smart tier label: for 985/211/双一流 schools, "safe" → "稳录" (feels more respectful)
   const eliteTiers = ["985", "211", "双一流"];
   const isElite = eliteTiers.includes(rec.universityTier);
-  const tierLabel = rec.tier === "safe" && isElite ? "稳录" : rec.tier === "match" ? "稳妥" : rec.tier === "safe" ? "保底" : "冲刺";
-  const tierVariant = rec.tier === "safe" ? "success" : rec.tier === "match" ? "success" : "warning";
+  const tierLabel = rec.tier === "college" ? "专科保底" : rec.tier === "safe" && isElite ? "稳录" : rec.tier === "match" ? "稳妥" : rec.tier === "safe" ? "保底" : "冲刺";
+  const tierVariant = rec.tier === "college" ? "info" : rec.tier === "safe" ? "success" : rec.tier === "match" ? "success" : "warning";
   return (
     <motion.div variants={fadeInUp}>
-      <Card className="group border-border/50 shadow-sm transition-shadow hover:shadow-md">
+      <Card className={`group shadow-sm transition-shadow hover:shadow-md ${
+        isHighRisk(rec)
+          ? "border-2 border-red-400/60 bg-red-50/30"
+          : "border-border/50"
+      }`}>
         {isHighRisk(rec) && (
-          <div className="flex items-center gap-2 rounded-t-lg border-b border-warning/20 bg-warning/5 px-4 py-2 text-xs text-warning">
+          <div className="flex items-center gap-2 rounded-t-lg border-b border-red-200 bg-red-50 px-4 py-2 text-xs font-medium text-red-600">
             <AlertTriangle className="h-3.5 w-3.5" />
-            此推荐为冲刺目标，录取概率相对较低，建议结合稳妥和保底选择综合考量。
+            ⚠️ 高风险冲刺：录取概率较低，滑档风险较大，请谨慎填报
           </div>
         )}
         <CardHeader className="pb-3">
@@ -406,6 +411,9 @@ export function AdmissionReport({ output }: AdmissionReportProps) {
   const reportRef = useRef<HTMLDivElement | null>(null);
   const { student, recommendations, summary, generatedAt } = output;
 
+  // Count college-level schools for data availability notice
+  const collegeCount = recommendations.filter((r) => r.universityTier === "专科").length;
+
   // --- Filter & sort state ---
   const ALL_TIERS = ["reach", "match", "safe"] as const;
   const [activeTiers, setActiveTiers] = useState<Set<string>>(new Set(ALL_TIERS));
@@ -450,12 +458,15 @@ export function AdmissionReport({ output }: AdmissionReportProps) {
   const reach = filtered.filter((r) => r.tier === "reach");
   const match = filtered.filter((r) => r.tier === "match");
   const safe = filtered.filter((r) => r.tier === "safe");
+  const college = filtered.filter((r) => r.tier === "college");
+  const highRiskCount = reach.filter((r) => isHighRisk(r)).length;
 
   // Global numbering across tiers
   let globalIdx = 0;
   const reachWithIdx = reach.map((rec) => ({ rec, idx: globalIdx++ }));
   const matchWithIdx = match.map((rec) => ({ rec, idx: globalIdx++ }));
   const safeWithIdx = safe.map((rec) => ({ rec, idx: globalIdx++ }));
+  const collegeWithIdx = college.map((rec) => ({ rec, idx: globalIdx++ }));
 
   return (
     <motion.div ref={reportRef} initial="hidden" animate="show" variants={staggerContainer} className="space-y-6">
@@ -479,6 +490,106 @@ export function AdmissionReport({ output }: AdmissionReportProps) {
 
       {/* Student Profile */}
       <StudentCard student={student} />
+
+      {/* Data Quality Notice */}
+      <motion.div variants={fadeInUp} className={`rounded-lg border px-4 py-3 text-xs ${
+        REAL_DATA_PROVINCES.includes(student.province)
+          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+          : "border-amber-200 bg-amber-50 text-amber-700"
+      }`}>
+        <div className="flex items-start gap-2">
+          {REAL_DATA_PROVINCES.includes(student.province) ? (
+            <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0" />
+          ) : (
+            <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+          )}
+          <div>
+            <p className="font-medium">
+              {REAL_DATA_PROVINCES.includes(student.province)
+                ? `✅ ${student.province}已覆盖真实录取数据`
+                : `⚠️ ${student.province}当前为模拟数据`
+              }
+            </p>
+            <p className="mt-0.5 opacity-80">
+              {REAL_DATA_PROVINCES.includes(student.province)
+                ? "基于官方公布的历年投档线数据，可信度高。"
+                : "完整真实数据正在扩展中，当前推荐仅供参考。建议以广东省份的真实数据体验为准。"
+              }
+            </p>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Overall Risk Assessment */}
+      <motion.div variants={fadeInUp} className={`rounded-lg border p-4 ${
+        highRiskCount >= 3
+          ? "border-red-300 bg-red-50"
+          : highRiskCount >= 1
+            ? "border-amber-300 bg-amber-50"
+            : "border-emerald-300 bg-emerald-50"
+      }`}>
+        <div className="flex items-start gap-3">
+          {highRiskCount >= 3 ? (
+            <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
+          ) : highRiskCount >= 1 ? (
+            <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
+          ) : (
+            <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" />
+          )}
+          <div>
+            <p className={`text-sm font-medium ${
+              highRiskCount >= 3 ? "text-red-700" : highRiskCount >= 1 ? "text-amber-700" : "text-emerald-700"
+            }`}>
+              {highRiskCount >= 3
+                ? "⚠️ 冲刺志愿偏多，滑档风险较高"
+                : highRiskCount >= 1
+                  ? "⚠️ 存在一定冲刺风险"
+                  : "✅ 志愿梯度合理，风险较低"
+              }
+            </p>
+            <p className={`mt-1 text-xs ${
+              highRiskCount >= 3 ? "text-red-600/80" : highRiskCount >= 1 ? "text-amber-600/80" : "text-emerald-600/80"
+            }`}>
+              {highRiskCount >= 3
+                ? `你有${highRiskCount}个高风险冲刺志愿。建议减少冲刺数量，增加稳妥和保底志愿，防止滑档。`
+                : highRiskCount >= 1
+                  ? `你有${highRiskCount}个冲刺志愿，录取概率相对较低。请结合稳妥和保底志愿综合考虑。`
+                  : "你的志愿冲稳保梯度合理，建议保持。"
+              }
+            </p>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Low-score encouragement: when most results are "reach", avoid anxiety */}
+      {recommendations.length > 0 && reach.length >= recommendations.length * 0.7 && (
+        <motion.div variants={fadeInUp} className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <div className="flex items-start gap-3">
+            <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-500" />
+            <div>
+              <p className="text-sm font-medium text-blue-700">💡 你的分数段以冲刺为主，这是正常的</p>
+              <p className="mt-1 text-xs text-blue-600/80">
+                在本科线附近的分数段，多数学校对你来说都是"冲刺"目标，这不代表没有希望。
+                建议策略：<strong>本科冲刺志愿多多益善</strong>（平行志愿下多冲不亏），
+                同时<strong>搭配{college.length > 0 ? "专科保底志愿" : "1-2个稳妥的保底志愿"}</strong>确保有学可上。
+                很多同学通过合理填报，最终都被冲刺志愿录取了。
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Low-data province notice */}
+      {!REAL_DATA_PROVINCES.includes(student.province) && recommendations.length < 6 && (
+        <motion.div variants={fadeInUp} className="rounded-lg border border-dashed border-amber-300 bg-amber-50/50 p-4 text-center">
+          <p className="text-sm font-medium text-amber-700">📋 {student.province}目前仅有{recommendations.length}条模拟数据</p>
+          <p className="mt-1 text-xs text-amber-600/70">
+            完整数据正在持续扩展中。想要完整体验推荐效果？试试切换到
+            <Link href="/admission" className="mx-1 font-medium text-primary underline">广东省</Link>
+            （已覆盖60+所高校的真实录取数据，物理类+历史类，本科+专科）
+          </p>
+        </motion.div>
+      )}
 
       {/* Filter & Sort Bar */}
       <motion.div variants={fadeInUp} className="rounded-lg border border-border/40 bg-surface p-4">
@@ -517,6 +628,11 @@ export function AdmissionReport({ output }: AdmissionReportProps) {
                 {label}
               </button>
             ))}
+            {collegeCount < 3 && collegeCount > 0 && (
+              <span className="text-[9px] text-muted-foreground/70" title="专科数据较少，持续补充中">
+                专科数据较少
+              </span>
+            )}
             <span className="mx-1 text-border">|</span>
             <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
             <select
@@ -577,6 +693,15 @@ export function AdmissionReport({ output }: AdmissionReportProps) {
           <h3 className="mb-3 flex items-center gap-2 text-lg font-bold"><CheckCircle2 className="h-5 w-5 text-success" />保底院校 ({safe.length})</h3>
           <p className="mb-3 text-xs text-muted-foreground">位次远超往年录取线，录取把握极大。建议至少填报1-2个保底志愿。</p>
           <div className="space-y-3">{safeWithIdx.map(({ rec, idx }) => <RecCard key={rec.id} rec={rec} index={idx} studentRank={student.rank} />)}</div>
+        </motion.div>
+      )}
+
+      {/* College Safety Net (for low score students) */}
+      {college.length > 0 && (
+        <motion.div variants={fadeInUp}>
+          <h3 className="mb-3 flex items-center gap-2 text-lg font-bold"><ShieldCheck className="h-5 w-5 text-info" />专科保底院校 ({college.length})</h3>
+          <p className="mb-3 text-xs text-muted-foreground">你的分数接近本科线，建议同时关注优质专科作为保底，防止滑档无学可上。部分优质专科就业前景不输本科。</p>
+          <div className="space-y-3">{collegeWithIdx.map(({ rec, idx }) => <RecCard key={rec.id} rec={rec} index={idx} studentRank={student.rank} />)}</div>
         </motion.div>
       )}
 
