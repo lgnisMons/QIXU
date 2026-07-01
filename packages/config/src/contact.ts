@@ -7,7 +7,7 @@
 
 export const contactConfig = {
   email: "pingxiaohuan@139.com",
-  phone: "15602467827",
+  phone: "15602461827",
   address: "深圳市",
   workHours: "预约制",
   wechatQr: {
