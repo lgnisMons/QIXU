@@ -142,6 +142,9 @@ export interface AdmissionRecommendation {
   tuition: number;
   tier: "reach" | "match" | "safe";
   compositeScore: number; // 0–100
+  /** The admission record cutoff data (for AI explanation accuracy) */
+  lowestRank: number;
+  lowestScore: number;
   rules: RuleResult[];
   breakdown: {
     scoreGap: number; // positive = above cutoff, negative = below

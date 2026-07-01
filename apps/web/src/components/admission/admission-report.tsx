@@ -6,7 +6,7 @@ import {
   TrendingUp, CheckCircle2, ShieldCheck, AlertTriangle,
   DollarSign, MapPin, GraduationCap, Briefcase, Building,
   ArrowRight, BarChart3, Star, Download, Camera, UserCheck, MessageCircle,
-  Sparkles, ChevronDown, ChevronUp,
+  Sparkles, ChevronDown, ChevronUp, Filter, ArrowUpDown,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardContent } from "@qixu/ui/card";
@@ -85,7 +85,7 @@ function Stat({ label, value, accent }: { label: string; value: string; accent?:
 
 // === AI Natural Language Explanation (P2) ===
 
-function AIExplanation({ rec }: { rec: AdmissionRecommendation }) {
+function AIExplanation({ rec, studentRank }: { rec: AdmissionRecommendation; studentRank: number }) {
   const [open, setOpen] = useState(false);
   const matchRule = rec.rules.find((r) => r.category === "match");
   const budgetRule = rec.rules.find((r) => r.category === "budget");
@@ -96,7 +96,15 @@ function AIExplanation({ rec }: { rec: AdmissionRecommendation }) {
   const matchDesc = (matchRule?.score ?? 0) >= 0.8 ? "录取概率较高" : (matchRule?.score ?? 0) >= 0.5 ? "有一定录取把握" : "录取存在一定难度";
   const budgetDesc = (budgetRule?.passed ?? false) ? "学费在你预算范围内" : "学费略超你的预算";
 
-  const explanation = `根据历年录取数据分析，${rec.universityName}(${rec.universityProvince}${rec.universityCity})的${rec.majorName}专业去年录取位次为${formatNumber(rec.breakdown.rankGap > 0 ? rec.breakdown.rankGap : 0)}名以内。你的位次(${formatNumber(Math.abs(rec.breakdown.rankGap))})${rec.breakdown.rankGap >= 0 ? "在此范围内" : "略低于此线"}，${matchDesc}。${budgetDesc}（学费¥${formatMoney(rec.tuition)}/年）。综合风险${riskLabel}。此为${rec.tier === "safe" ? "保底" : rec.tier === "match" ? "稳妥" : "冲刺"}推荐。`;
+  // Correct comparison: actual cutoff rank vs actual student rank
+  const cutoffRank = rec.lowestRank;
+  const rankComparison = cutoffRank > studentRank
+    ? `低于录取线（差${formatNumber(cutoffRank - studentRank)}名）`
+    : cutoffRank <= studentRank
+      ? `高于录取线（超出${formatNumber(studentRank - cutoffRank)}名）`
+      : `接近录取线`;
+
+  const explanation = `根据历年录取数据分析，${rec.universityName}(${rec.universityProvince}${rec.universityCity})的${rec.majorName}专业2025年录取最低位次为${formatNumber(cutoffRank)}名。你的位次为${formatNumber(studentRank)}名，${rankComparison}，${matchDesc}。${budgetDesc}（学费¥${formatMoney(rec.tuition)}/年）。综合风险${riskLabel}。此为${rec.tier === "safe" ? "保底" : rec.tier === "match" ? "稳妥" : "冲刺"}推荐。`;
 
   return (
     <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
@@ -123,7 +131,7 @@ function AIExplanation({ rec }: { rec: AdmissionRecommendation }) {
 
 // === Recommendation Card ===
 
-function RecCard({ rec, index }: { rec: AdmissionRecommendation; index: number }) {
+function RecCard({ rec, index, studentRank }: { rec: AdmissionRecommendation; index: number; studentRank: number }) {
   return (
     <motion.div variants={fadeInUp}>
       <Card className="group border-border/50 shadow-sm transition-shadow hover:shadow-md">
@@ -179,7 +187,7 @@ function RecCard({ rec, index }: { rec: AdmissionRecommendation; index: number }
           </div>
 
           {/* P2: AI Natural Language Explanation */}
-          <AIExplanation rec={rec} />
+          <AIExplanation rec={rec} studentRank={studentRank} />
 
           {/* Expandable rule detail */}
           <details className="text-xs">
@@ -309,21 +317,30 @@ function MentorReview({ recommendations }: { recommendations: AdmissionRecommend
   );
 }
 
-// === P1: Save as Image ===
+// === P1: Save as Image (html-to-image) ===
 
 function SaveAsImage({ reportRef }: { reportRef: React.RefObject<HTMLDivElement | null> }) {
   const [saving, setSaving] = useState(false);
 
   const handleSave = useCallback(async () => {
+    if (!reportRef.current) return;
     setSaving(true);
     try {
-      // Use browser-native approach — the user can also just screenshot
-      if (reportRef.current) {
-        // Simple approach: open print dialog styled for PDF-like output
-        window.print();
-      }
-    } catch {
-      // Silently fail — not critical
+      const { toPng } = await import("html-to-image");
+      const dataUrl = await toPng(reportRef.current, {
+        quality: 0.95,
+        pixelRatio: 2,
+        backgroundColor: "#ffffff",
+      });
+      // Trigger download
+      const link = document.createElement("a");
+      link.download = `QIXU志愿推荐报告_${new Date().toLocaleDateString("zh-CN").replace(/\//g, "-")}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error("Save as image failed:", err);
+      // Graceful fallback: open print dialog
+      window.print();
     } finally {
       setSaving(false);
     }
@@ -333,7 +350,7 @@ function SaveAsImage({ reportRef }: { reportRef: React.RefObject<HTMLDivElement 
     <div className="flex flex-wrap justify-center gap-3">
       <Button variant="outline" size="sm" onClick={handleSave} disabled={saving}>
         <Download className="mr-1.5 h-4 w-4" />
-        {saving ? "准备中..." : "保存报告"}
+        {saving ? "生成图片中..." : "保存为图片"}
       </Button>
     </div>
   );
@@ -368,9 +385,44 @@ interface AdmissionReportProps {
 export function AdmissionReport({ output }: AdmissionReportProps) {
   const reportRef = useRef<HTMLDivElement | null>(null);
   const { student, recommendations, summary, generatedAt } = output;
-  const reach = recommendations.filter((r) => r.tier === "reach");
-  const match = recommendations.filter((r) => r.tier === "match");
-  const safe = recommendations.filter((r) => r.tier === "safe");
+
+  // --- Filter & sort state ---
+  const ALL_TIERS = ["reach", "match", "safe"] as const;
+  const [activeTiers, setActiveTiers] = useState<Set<string>>(new Set(ALL_TIERS));
+  const allProvinces = [...new Set(recommendations.map((r) => r.universityProvince))].sort();
+  const [activeProvinces, setActiveProvinces] = useState<Set<string>>(new Set(allProvinces));
+  type SortKey = "composite" | "tuition-asc" | "tuition-desc";
+  const [sortBy, setSortBy] = useState<SortKey>("composite");
+
+  const toggleTier = (t: string) => {
+    setActiveTiers((prev) => {
+      const next = new Set(prev);
+      if (next.has(t)) { if (next.size > 1) next.delete(t); }
+      else next.add(t);
+      return next;
+    });
+  };
+  const toggleProvince = (p: string) => {
+    setActiveProvinces((prev) => {
+      const next = new Set(prev);
+      if (next.has(p)) { if (next.size > 1) next.delete(p); }
+      else next.add(p);
+      return next;
+    });
+  };
+
+  // Apply filters
+  const filtered = recommendations
+    .filter((r) => activeTiers.has(r.tier) && activeProvinces.has(r.universityProvince))
+    .sort((a, b) => {
+      if (sortBy === "tuition-asc") return a.tuition - b.tuition;
+      if (sortBy === "tuition-desc") return b.tuition - a.tuition;
+      return b.compositeScore - a.compositeScore;
+    });
+
+  const reach = filtered.filter((r) => r.tier === "reach");
+  const match = filtered.filter((r) => r.tier === "match");
+  const safe = filtered.filter((r) => r.tier === "safe");
 
   return (
     <motion.div ref={reportRef} initial="hidden" animate="show" variants={staggerContainer} className="space-y-6">
@@ -395,12 +447,68 @@ export function AdmissionReport({ output }: AdmissionReportProps) {
       {/* Student Profile */}
       <StudentCard student={student} />
 
+      {/* Filter & Sort Bar */}
+      <motion.div variants={fadeInUp} className="rounded-lg border border-border/40 bg-surface p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <span className="text-xs font-medium">层次：</span>
+            {ALL_TIERS.map((t) => (
+              <button
+                key={t}
+                onClick={() => toggleTier(t)}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  activeTiers.has(t)
+                    ? t === "reach" ? "bg-warning/15 text-warning" : "bg-success/15 text-success"
+                    : "bg-muted text-muted-foreground line-through"
+                }`}
+              >
+                {t === "reach" ? "冲刺" : t === "match" ? "稳妥" : "保底"}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortKey)}
+              className="rounded border border-border/50 bg-background px-2 py-1 text-xs outline-none focus:border-primary"
+            >
+              <option value="composite">综合匹配度 ↓</option>
+              <option value="tuition-asc">学费从低到高</option>
+              <option value="tuition-desc">学费从高到低</option>
+            </select>
+          </div>
+        </div>
+        {allProvinces.length > 1 && (
+          <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-border/30 pt-2">
+            <span className="text-[10px] text-muted-foreground mr-1">省份：</span>
+            {allProvinces.map((p) => (
+              <button
+                key={p}
+                onClick={() => toggleProvince(p)}
+                className={`rounded px-2 py-0.5 text-[10px] transition-colors ${
+                  activeProvinces.has(p)
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+        )}
+        <p className="mt-2 text-[10px] text-muted-foreground/50">
+          当前显示 {filtered.length}/{recommendations.length} 条推荐
+        </p>
+      </motion.div>
+
       {/* Reach */}
       {reach.length > 0 && (
         <motion.div variants={fadeInUp}>
           <h3 className="mb-3 flex items-center gap-2 text-lg font-bold"><TrendingUp className="h-5 w-5 text-warning" />冲刺院校 ({reach.length})</h3>
           <p className="mb-3 text-xs text-muted-foreground">录取概率相对较低，但值得尝试。建议冲刺不超过志愿总数的20%。</p>
-          <div className="space-y-3">{reach.map((rec, i) => <RecCard key={rec.id} rec={rec} index={i} />)}</div>
+          <div className="space-y-3">{reach.map((rec, i) => <RecCard key={rec.id} rec={rec} index={i} studentRank={student.rank} />)}</div>
         </motion.div>
       )}
 
@@ -409,7 +517,7 @@ export function AdmissionReport({ output }: AdmissionReportProps) {
         <motion.div variants={fadeInUp}>
           <h3 className="mb-3 flex items-center gap-2 text-lg font-bold"><ShieldCheck className="h-5 w-5 text-success" />稳妥院校 ({match.length})</h3>
           <p className="mb-3 text-xs text-muted-foreground">你的位次在往年录取范围之内，录取概率较高。建议作为主力志愿。</p>
-          <div className="space-y-3">{match.map((rec, i) => <RecCard key={rec.id} rec={rec} index={i} />)}</div>
+          <div className="space-y-3">{match.map((rec, i) => <RecCard key={rec.id} rec={rec} index={i} studentRank={student.rank} />)}</div>
         </motion.div>
       )}
 
@@ -418,7 +526,7 @@ export function AdmissionReport({ output }: AdmissionReportProps) {
         <motion.div variants={fadeInUp}>
           <h3 className="mb-3 flex items-center gap-2 text-lg font-bold"><CheckCircle2 className="h-5 w-5 text-success" />保底院校 ({safe.length})</h3>
           <p className="mb-3 text-xs text-muted-foreground">位次远超往年录取线，录取把握极大。建议至少填报1-2个保底志愿。</p>
-          <div className="space-y-3">{safe.map((rec, i) => <RecCard key={rec.id} rec={rec} index={i} />)}</div>
+          <div className="space-y-3">{safe.map((rec, i) => <RecCard key={rec.id} rec={rec} index={i} studentRank={student.rank} />)}</div>
         </motion.div>
       )}
 

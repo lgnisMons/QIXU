@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft, FileText, RefreshCw, ExternalLink } from "lucide-react";
 import { Button } from "@qixu/ui/button";
 import { Breadcrumb } from "@qixu/ui/breadcrumb";
@@ -10,33 +11,64 @@ import { PageSection } from "@qixu/ui/page-section";
 import { EmptyState } from "@qixu/ui/empty-state";
 import { AdmissionReport } from "@/components/admission/admission-report";
 import { runRecommendationEngine } from "@qixu/domain";
-import type { StudentProfile, AdmissionRecommendationOutput } from "@qixu/domain";
+import type { StudentProfile, AdmissionRecommendationOutput, MajorCategory, SubjectType } from "@qixu/domain";
+
+/** Try to parse profile from URL search params (compact encoding) */
+function parseProfileFromParams(sp: URLSearchParams): StudentProfile | null {
+  const province = sp.get("pv");
+  const subjectType = sp.get("st") as SubjectType | null;
+  const score = Number(sp.get("sc"));
+  const rank = Number(sp.get("rk"));
+  const budget = Number(sp.get("bg"));
+  if (!province || !subjectType || !score || !rank || !budget) return null;
+  const mp = sp.get("mp");
+  const cp = sp.get("cp");
+  return {
+    province,
+    subjectType,
+    score,
+    rank,
+    budget,
+    majorPreference: mp ? (mp.split(",").filter(Boolean) as MajorCategory[]) : [],
+    careerPreference: cp ? cp.split(",").filter(Boolean) : [],
+    adjustmentAccepted: sp.get("aj") !== "0",
+    cooperativeProgramAccepted: sp.get("co") === "1",
+    familyFinancialLevel: budget >= 120000 ? "high" : budget >= 30000 ? "medium" : "low",
+  };
+}
 
 export function AdmissionResultContent() {
+  const searchParams = useSearchParams();
   const [output, setOutput] = useState<AdmissionRecommendationOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
 
-  useEffect(() => {
+  // Parse profile once from URL params (priority) or sessionStorage (fallback)
+  const resolvedProfile = useMemo((): StudentProfile | null => {
+    const fromUrl = parseProfileFromParams(searchParams);
+    if (fromUrl) return fromUrl;
     try {
       const raw = sessionStorage.getItem("qixu_admission_profile");
-      if (!raw) {
-        setError("未找到志愿填报数据，请先完成信息填写。");
-        return;
-      }
-      const parsed: StudentProfile = JSON.parse(raw);
-      setProfile(parsed);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }, [searchParams]);
 
-      // FIX: Use the subjectType from the profile, not hardcoded
-      const result = runRecommendationEngine(parsed, {
-        subjectType: parsed.subjectType,
+  useEffect(() => {
+    if (!resolvedProfile) {
+      setError("未找到志愿填报数据，请先完成信息填写。");
+      return;
+    }
+    setProfile(resolvedProfile);
+
+    try {
+      const result = runRecommendationEngine(resolvedProfile, {
+        subjectType: resolvedProfile.subjectType,
         maxRecommendations: 20,
       });
 
       if (result.recommendations.length === 0) {
-        // Give a useful error instead of silent empty
         setError(
-          `当前数据暂不支持你在「${parsed.province}」的「${parsed.subjectType}」组合。我们的数据正在持续扩展中，目前覆盖10个省份。`
+          `当前数据暂不支持你在「${resolvedProfile.province}」的「${resolvedProfile.subjectType}」组合。我们的数据正在持续扩展中，目前覆盖10个省份。`
         );
         return;
       }
@@ -45,7 +77,7 @@ export function AdmissionResultContent() {
     } catch {
       setError("数据解析失败，请重新完成评估。");
     }
-  }, []);
+  }, [resolvedProfile]);
 
   if (error) {
     return (

@@ -77,8 +77,20 @@ export function AdmissionForm() {
       cooperativeProgramAccepted: cooperative,
       familyFinancialLevel: budget >= 120000 ? "high" : budget >= 30000 ? "medium" : "low",
     };
+    // Persist to sessionStorage (fallback for non-URL access)
     sessionStorage.setItem("qixu_admission_profile", JSON.stringify(profile));
-    router.push("/admission-result");
+    // Encode to URL params for shareability & cross-tab support
+    const params = new URLSearchParams();
+    params.set("pv", province);
+    params.set("st", subjectType);
+    params.set("sc", String(score));
+    params.set("rk", String(rank));
+    params.set("bg", String(budget));
+    if (majorPref.length > 0) params.set("mp", majorPref.join(","));
+    if (careerPref.length > 0) params.set("cp", careerPref.join(","));
+    params.set("aj", adjustment ? "1" : "0");
+    params.set("co", cooperative ? "1" : "0");
+    router.push(`/admission-result?${params.toString()}`);
   };
 
   return (
@@ -129,18 +141,45 @@ export function AdmissionForm() {
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium">高考分数：{score}分</label>
+                    <label className="mb-1.5 block text-sm font-medium">高考分数</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        min={scoreRange.min} max={scoreRange.max}
+                        value={score}
+                        onChange={(e) => {
+                          const v = Number(e.target.value);
+                          if (!isNaN(v)) setScore(Math.min(scoreRange.max, Math.max(scoreRange.min, v)));
+                        }}
+                        className="w-28 rounded-md border border-input bg-background px-3 py-2 text-center text-lg font-semibold tabular-nums outline-none focus:border-primary focus:ring-1 focus:ring-ring"
+                      />
+                      <div className="flex flex-col gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => setScore((s) => Math.min(scoreRange.max, s + 1))}
+                          className="flex-1 rounded border border-border/50 px-2 text-xs hover:bg-muted transition-colors"
+                          aria-label="加1分"
+                        >▴</button>
+                        <button
+                          type="button"
+                          onClick={() => setScore((s) => Math.max(scoreRange.min, s - 1))}
+                          className="flex-1 rounded border border-border/50 px-2 text-xs hover:bg-muted transition-colors"
+                          aria-label="减1分"
+                        >▾</button>
+                      </div>
+                    </div>
                     <input
                       type="range"
                       min={scoreRange.min} max={scoreRange.max}
                       value={score}
                       onChange={(e) => setScore(Number(e.target.value))}
-                      className="w-full accent-primary"
+                      className="mt-2 w-full accent-primary"
                     />
                     <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
                       <span>{scoreRange.min}</span><span>{Math.round((scoreRange.min + scoreRange.max) / 3)}</span>
                       <span>{Math.round((scoreRange.min + scoreRange.max) * 2 / 3)}</span><span>{scoreRange.max}</span>
                     </div>
+                    <p className="mt-1 text-[10px] text-muted-foreground/60">精确输入高考分数，也可用滑块快速调整。各省满分不同（如上海660分、海南900分）</p>
                   </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium">全省位次</label>

@@ -97,6 +97,8 @@ export function runRecommendationEngine(
       tuition: record.tuition,
       tier,
       compositeScore: composite,
+      lowestRank: record.lowestRank,
+      lowestScore: record.lowestScore,
       rules,
       breakdown: buildBreakdown(student, record, university, major, rules),
     });
@@ -208,9 +210,11 @@ function evaluateSafe(student: StudentProfile, record: AdmissionRecord): RuleRes
 
 /** Budget: tuition + estimated living cost vs student budget */
 function evaluateBudget(student: StudentProfile, record: AdmissionRecord): RuleResult {
-  // cooperative programs are ~2× regular tuition, so effective cost is higher
-  const costMultiplier = student.cooperativeProgramAccepted ? 1.0 : 1.0;
-  const effectiveCost = record.tuition * costMultiplier;
+  // Budget fit is straightforward: can the student afford this record's tuition?
+  // If the student doesn't accept cooperative programs and the record has high
+  // tuition (>100k), the budget check naturally fails — no multiplier needed.
+  // The cooperative flag is separately checked in risk evaluation.
+  const effectiveCost = record.tuition;
   const ratio = student.budget / Math.max(effectiveCost, 1);
 
   let score: number;
