@@ -142,6 +142,11 @@ function AIExplanation({ rec, studentRank }: { rec: AdmissionRecommendation; stu
 // === Recommendation Card ===
 
 function RecCard({ rec, index, studentRank }: { rec: AdmissionRecommendation; index: number; studentRank: number }) {
+  // Smart tier label: for 985/211/双一流 schools, "safe" → "稳录" (feels more respectful)
+  const eliteTiers = ["985", "211", "双一流"];
+  const isElite = eliteTiers.includes(rec.universityTier);
+  const tierLabel = rec.tier === "safe" && isElite ? "稳录" : rec.tier === "match" ? "稳妥" : rec.tier === "safe" ? "保底" : "冲刺";
+  const tierVariant = rec.tier === "safe" ? "success" : rec.tier === "match" ? "success" : "warning";
   return (
     <motion.div variants={fadeInUp}>
       <Card className="group border-border/50 shadow-sm transition-shadow hover:shadow-md">
@@ -157,7 +162,12 @@ function RecCard({ rec, index, studentRank }: { rec: AdmissionRecommendation; in
               <div className="flex items-center gap-2">
                 <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-[10px] font-bold text-primary">{index + 1}</span>
                 <CardTitle className="text-base">{rec.universityName}</CardTitle>
-                {rec.tier === "safe" ? <Badge variant="success" className="text-xs">保底</Badge> : rec.tier === "match" ? <Badge className="text-xs bg-success/20 text-success">稳妥</Badge> : <Badge variant="warning" className="text-xs">冲刺</Badge>}
+                {/* University tier badge */}
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
+                  {rec.universityTier}
+                </Badge>
+                {/* Recommendation tier badge */}
+                <Badge variant={tierVariant as "success" | "warning"} className="text-xs">{tierLabel}</Badge>
               </div>
               <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1"><GraduationCap className="h-3 w-3" />{rec.majorName}</span>
@@ -403,6 +413,8 @@ export function AdmissionReport({ output }: AdmissionReportProps) {
   const [activeProvinces, setActiveProvinces] = useState<Set<string>>(new Set(allProvinces));
   type SortKey = "composite" | "tuition-asc" | "tuition-desc";
   const [sortBy, setSortBy] = useState<SortKey>("composite");
+  // 办学层次 filter: true=本科, false=专科, null=全部
+  const [levelFilter, setLevelFilter] = useState<"all" | "benke" | "zhuanke">("all");
 
   const toggleTier = (t: string) => {
     setActiveTiers((prev) => {
@@ -424,6 +436,11 @@ export function AdmissionReport({ output }: AdmissionReportProps) {
   // Apply filters
   const filtered = recommendations
     .filter((r) => activeTiers.has(r.tier) && activeProvinces.has(r.universityProvince))
+    .filter((r) => {
+      if (levelFilter === "benke") return r.universityTier !== "专科";
+      if (levelFilter === "zhuanke") return r.universityTier === "专科";
+      return true;
+    })
     .sort((a, b) => {
       if (sortBy === "tuition-asc") return a.tuition - b.tuition;
       if (sortBy === "tuition-desc") return b.tuition - a.tuition;
@@ -484,6 +501,23 @@ export function AdmissionReport({ output }: AdmissionReportProps) {
             ))}
           </div>
           <div className="flex items-center gap-2">
+            <span className="text-[10px] text-muted-foreground">办学：</span>
+            {([
+              ["all", "全部"],
+              ["benke", "本科"],
+              ["zhuanke", "专科"],
+            ] as const).map(([v, label]) => (
+              <button
+                key={v}
+                onClick={() => setLevelFilter(v)}
+                className={`rounded-full px-2.5 py-0.5 text-[10px] font-medium transition-colors ${
+                  levelFilter === v ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+            <span className="mx-1 text-border">|</span>
             <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
             <select
               value={sortBy}

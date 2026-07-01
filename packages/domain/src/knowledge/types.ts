@@ -138,6 +138,8 @@ export interface AdmissionRecommendation {
   universityName: string;
   universityCity: string;
   universityProvince: string;
+  universityTier: UniversityTier;
+  universityType: UniversityType;
   majorName: string;
   tuition: number;
   tier: "reach" | "match" | "safe";

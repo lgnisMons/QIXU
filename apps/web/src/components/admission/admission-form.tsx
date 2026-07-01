@@ -14,6 +14,7 @@ import {
   ADMISSION_PROVINCES,
   MAJOR_CATEGORY_OPTIONS, CAREER_OPTIONS,
   SUBJECT_TYPES, BUDGET_OPTIONS, getScoreRange,
+  checkScoreRankConsistency,
 } from "@/lib/admission-data";
 
 const STEPS = [
@@ -198,6 +199,14 @@ export function AdmissionForm() {
                       placeholder="输入你的全省排名（1-999999）"
                     />
                     <p className="mt-1 text-[10px] text-muted-foreground/60">输入正整数（全省排名），排名越靠前数字越小</p>
+                    {province && score > 0 && rank >= 1 && (() => {
+                      const warn = checkScoreRankConsistency(province, score, rank);
+                      return warn ? (
+                        <p className="mt-1.5 text-[11px] text-warning flex items-center gap-1">
+                          <Info className="h-3 w-3 shrink-0" />{warn}
+                        </p>
+                      ) : null;
+                    })()}
                   </div>
                 </div>
               )}

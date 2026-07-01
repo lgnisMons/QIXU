@@ -119,7 +119,9 @@ export function runRecommendationEngine(
       universityName: university.name,
       universityCity: university.city,
       universityProvince: university.province,
-      majorName: major.id === "m-unified" ? "不限专业（投档线）" : major.name,
+      universityTier: university.tier,
+      universityType: university.type,
+      majorName: major.id === "m-unified" ? "参考投档线（全校最低）" : major.name,
       tuition: record.tuition,
       tier,
       compositeScore: composite,
@@ -166,16 +168,16 @@ function evaluateAllRules(
   };
 }
 
-/** Reach (冲): student rank close to or below cutoff (rankRatio <= 1.00) */
+/** Reach (冲): student rank close to or below cutoff (rankRatio < 1.00) */
 function evaluateReach(student: StudentProfile, record: AdmissionRecord): RuleResult {
   const rankRatio = record.lowestRank / Math.max(student.rank, 1);
   let score: number;
   let detail: string;
 
-  // FIX Bug 7: rankRatio > 1 means student is ABOVE cutoff (safe/match zone),
-  // not reach. Reach only applies when rankRatio < 1.
-  if (rankRatio >= 0.95 && rankRatio <= 1.00) {
-    score = 0.9;
+  // rankRatio >= 1.00 means student is AT or ABOVE cutoff — not a reach.
+  // Only rankRatio < 1.00 (student below cutoff) is a legitimate reach attempt.
+  if (rankRatio >= 0.95 && rankRatio < 1.00) {
+    score = 0.88;
     detail = `位次(${student.rank.toLocaleString()})非常接近录取位次(${record.lowestRank.toLocaleString()})，可以冲刺`;
   } else if (rankRatio >= 0.85 && rankRatio < 0.95) {
     score = 0.65;
@@ -183,9 +185,9 @@ function evaluateReach(student: StudentProfile, record: AdmissionRecord): RuleRe
   } else if (rankRatio >= 0.70 && rankRatio < 0.85) {
     score = 0.3;
     detail = `差距明显，冲刺难度较高`;
-  } else if (rankRatio > 1.00) {
-    score = 0.15;
-    detail = `位次已超过录取线，不属于冲刺范围`;
+  } else if (rankRatio >= 1.00) {
+    score = 0.12;
+    detail = `位次已达到或超过录取线，不属于冲刺范围`;
   } else {
     score = 0.05;
     detail = `差距过大，不建议作为冲刺目标`;
@@ -193,20 +195,20 @@ function evaluateReach(student: StudentProfile, record: AdmissionRecord): RuleRe
   return { category: "reach", score, label: "冲刺", detail, passed: score >= 0.4 };
 }
 
-/** Match (稳): student above cutoff (rankRatio 1.00 — 1.50) */
+/** Match (稳): student at or above cutoff (rankRatio >= 1.00) */
 function evaluateMatch(student: StudentProfile, record: AdmissionRecord): RuleResult {
   const rankRatio = record.lowestRank / Math.max(student.rank, 1);
   let score: number;
   let detail: string;
-  if (rankRatio >= 1.10 && rankRatio <= 1.50) {
-    score = 0.95;
-    detail = `位次(${student.rank.toLocaleString()})在录取范围(${record.lowestRank.toLocaleString()})之内，录取可能性大`;
-  } else if (rankRatio > 1.50 && rankRatio <= 2.00) {
-    score = 0.8;
-    detail = `位次稳超录取线，录取把握很大`;
+  if (rankRatio >= 1.50 && rankRatio <= 2.00) {
+    score = 0.92;
+    detail = `位次(${student.rank.toLocaleString()})稳超录取线(${record.lowestRank.toLocaleString()})，录取把握很大`;
+  } else if (rankRatio >= 1.10 && rankRatio < 1.50) {
+    score = 0.85;
+    detail = `位次在录取范围之内，录取可能性大`;
   } else if (rankRatio >= 1.00 && rankRatio < 1.10) {
     score = 0.6;
-    detail = `位次刚好越过录取线，有较大把握但需注意风险`;
+    detail = `位次刚好越过录取线，有一定把握但需关注分数线波动`;
   } else if (rankRatio > 2.00) {
     score = 0.4;
     detail = `位次远超录取线，建议作为保底而非稳妥`;
@@ -235,31 +237,34 @@ function evaluateSafe(student: StudentProfile, record: AdmissionRecord): RuleRes
   return { category: "safe", score, label: "保底", detail, passed: score >= 0.6 };
 }
 
-/** Budget: tuition vs student budget */
+/** Budget: tuition + estimated living cost vs student budget */
 function evaluateBudget(student: StudentProfile, record: AdmissionRecord): RuleResult {
-  // FIX Bug 5: Removed broken costMultiplier. Check tuition directly.
-  // High-tuition (cooperative) programs are flagged in risk evaluation instead.
-  const effectiveCost = record.tuition;
-  const ratio = student.budget / Math.max(effectiveCost, 1);
+  // Conservative estimate: living costs ~¥15k/year in most Chinese cities
+  const assumedLivingCost = 15000;
+  const totalCost = record.tuition + assumedLivingCost;
+  const ratio = student.budget / Math.max(totalCost, 1);
 
   let score: number;
   let detail: string;
-  // FIX Bug 8: passed threshold must respect strictness for low-income families
-  const strictness = student.familyFinancialLevel === "low" ? 1.2 : 1.0;
+  const strictness = student.familyFinancialLevel === "low" ? 1.3 : 1.0;
   const passedThreshold = 1.0 * strictness;
 
-  if (ratio >= 2 * strictness) {
-    score = 1.0;
-    detail = `学费¥${formatK(record.tuition)}/年在预算内，负担轻松`;
-  } else if (ratio >= 1.0 * strictness) {
-    score = 0.8;
-    detail = `学费在预算范围内`;
-  } else if (ratio >= 0.8) {
-    score = 0.4;
-    detail = `学费略超预算，需考虑经济因素`;
+  if (ratio >= 2.5 * strictness) {
+    score = 0.95;
+    detail = `学费¥${formatK(record.tuition)}/年 + 生活费≈¥${formatK(assumedLivingCost)}/年，合计¥${formatK(totalCost)}/年，预算充足`;
+  } else if (ratio >= 1.3 * strictness) {
+    score = 0.85;
+    detail = `学费¥${formatK(record.tuition)}/年 + 生活费≈¥${formatK(assumedLivingCost)}/年，合计¥${formatK(totalCost)}/年，在预算范围内`;
+  } else if (ratio >= passedThreshold) {
+    score = 0.6;
+    const warn = student.familyFinancialLevel === "low" ? "（家庭经济一般，建议谨慎考虑）" : "";
+    detail = `学费¥${formatK(record.tuition)}/年 + 生活费≈¥${formatK(assumedLivingCost)}/年，合计¥${formatK(totalCost)}/年，预算基本够用${warn}`;
+  } else if (ratio >= 0.7) {
+    score = 0.35;
+    detail = `合计费用¥${formatK(totalCost)}/年略超预算¥${formatK(student.budget)}/年，需考虑经济因素`;
   } else {
     score = 0.1;
-    detail = `学费超出预算较多`;
+    detail = `合计费用¥${formatK(totalCost)}/年超出预算¥${formatK(student.budget)}/年较多，经济压力大`;
   }
   return { category: "budget", score, label: "预算", detail, passed: ratio >= passedThreshold };
 }

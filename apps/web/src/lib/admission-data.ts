@@ -86,3 +86,61 @@ export const SCORE_RANGE: Record<string, { min: number; max: number }> = {
 export function getScoreRange(province: string): { min: number; max: number } {
   return SCORE_RANGE[province] ?? { min: 300, max: 750 };
 }
+
+/**
+ * Check if score and rank are roughly consistent for a given province.
+ * Returns null if consistent, or a warning message if the combination
+ * looks implausible (e.g. 700 score with 200,000 rank).
+ *
+ * Based on known score-rank distributions from real admission data.
+ */
+export function checkScoreRankConsistency(
+  province: string,
+  score: number,
+  rank: number,
+): string | null {
+  // Approximate rank ranges per score band for 物理类 (most common case)
+  // Data from Guangdong 2025 物理类 official distribution
+  if (province === "广东") {
+    const ranges = [
+      { minScore: 660, maxRank: 2500 },
+      { minScore: 640, maxRank: 6000 },
+      { minScore: 620, maxRank: 14000 },
+      { minScore: 600, maxRank: 26000 },
+      { minScore: 580, maxRank: 42000 },
+      { minScore: 560, maxRank: 65000 },
+      { minScore: 540, maxRank: 90000 },
+      { minScore: 520, maxRank: 125000 },
+      { minScore: 500, maxRank: 160000 },
+      { minScore: 480, maxRank: 200000 },
+      { minScore: 460, maxRank: 240000 },
+      { minScore: 440, maxRank: 290000 },
+      { minScore: 420, maxRank: 330000 },
+    ];
+    // Find the appropriate range and check
+    let expectedMaxRank = 400000;
+    for (const r of ranges) {
+      if (score >= r.minScore) { expectedMaxRank = r.maxRank; break; }
+    }
+    if (rank > expectedMaxRank * 1.5) {
+      return `分数 ${score} 通常对应位次 ≤${expectedMaxRank.toLocaleString()}，你输入的位次 ${rank.toLocaleString()} 偏大，请确认是否正确`;
+    }
+    if (score >= 600 && rank > 80000) {
+      return `高分段（${score}分）通常位次不会超过8万名，请检查分数或位次是否填反了`;
+    }
+    if (score <= 450 && rank < 30000) {
+      return `低分段（${score}分）通常位次不会低于3万名，请检查分数或位次是否填反了`;
+    }
+  }
+
+  // Generic check for other provinces (750-score system)
+  const maxScore = getScoreRange(province).max;
+  if (score > maxScore * 0.85 && rank > 100000) {
+    return `高分段通常位次不会这么靠后，请确认位次是否正确`;
+  }
+  if (score < maxScore * 0.55 && rank < 10000) {
+    return `低分段通常位次不会这么靠前，请确认分数是否正确`;
+  }
+
+  return null;
+}
