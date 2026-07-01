@@ -16,6 +16,8 @@ export type UniversityTier =
   | "211"
   | "双一流"
   | "普通本科"
+  | "民办"
+  | "中外合作"
   | "专科";
 
 export type UniversityType =
@@ -28,7 +30,8 @@ export type UniversityType =
   | "财经"
   | "语言"
   | "艺术"
-  | "体育";
+  | "体育"
+  | "民族";
 
 export interface University {
   id: string;
@@ -149,6 +152,10 @@ export interface AdmissionRecommendation {
   /** The admission record cutoff data (for AI explanation accuracy) */
   lowestRank: number;
   lowestScore: number;
+  /** 数据质量：real=官方真实数据, estimated=基于真实数据估算, mock=模拟数据 */
+  dataQuality?: "real" | "estimated" | "mock";
+  /** 数据年份 */
+  dataYear?: number;
   rules: RuleResult[];
   breakdown: {
     scoreGap: number; // positive = above cutoff, negative = below

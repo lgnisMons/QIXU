@@ -37,6 +37,7 @@ const RULE_WEIGHTS: Record<string, number> = {
   risk: 0.12,
 };
 
+const MIN_VIABLE_RANK_RATIO = 0.5; // Skip records where gap is >2x (effectively impossible)
 // Cooperative / high-tuition threshold (CNY/year)
 const COOP_TUITION_THRESHOLD = 50000;
 
@@ -107,6 +108,10 @@ export function runRecommendationEngine(
     if (count >= 2) continue;
     perUniCount.set(university.id, count + 1);
 
+    // Skip clearly impossible reaches: gap >2x (e.g. Tsinghua for rank 1800 student)
+    const rankRatio = record.lowestRank / Math.max(student.rank, 1);
+    if (rankRatio < MIN_VIABLE_RANK_RATIO) continue;
+
     const { rules, riskLevel } = evaluateAllRules(student, record, major, university);
     const composite = computeComposite(rules);
     const tier = classifyTier(rules);
@@ -127,6 +132,8 @@ export function runRecommendationEngine(
       compositeScore: composite,
       lowestRank: record.lowestRank,
       lowestScore: record.lowestScore,
+      dataQuality: record.dataQuality ?? "estimated",
+      dataYear: record.year,
       rules,
       breakdown: buildBreakdown(student, record, rules, riskLevel),
     });
@@ -326,6 +333,7 @@ const UNI_TYPE_TO_MAJORS: Record<UniversityType, string[]> = {
   "语言": ["文学", "外国语言文学", "翻译"],
   "艺术": ["艺术学", "设计学", "音乐与舞蹈学", "戏剧与影视学"],
   "体育": ["教育学", "体育学"],
+  "民族": ["法学", "文学", "经济学", "教育学", "管理学"], // 民族类以人文社科为主
 };
 
 function calcUniversityTypeMatch(
