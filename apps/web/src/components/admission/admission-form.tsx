@@ -69,28 +69,33 @@ export function AdmissionForm() {
 
   const handleSubmit = () => {
     setSubmitting(true);
-    const profile: StudentProfile = {
-      province, subjectType, score, rank, budget,
-      careerPreference: careerPref,
-      majorPreference: majorPref,
-      adjustmentAccepted: adjustment,
-      cooperativeProgramAccepted: cooperative,
-      familyFinancialLevel: budget >= 120000 ? "high" : budget >= 30000 ? "medium" : "low",
-    };
-    // Persist to sessionStorage (fallback for non-URL access)
-    sessionStorage.setItem("qixu_admission_profile", JSON.stringify(profile));
-    // Encode to URL params for shareability & cross-tab support
-    const params = new URLSearchParams();
-    params.set("pv", province);
-    params.set("st", subjectType);
-    params.set("sc", String(score));
-    params.set("rk", String(rank));
-    params.set("bg", String(budget));
-    if (majorPref.length > 0) params.set("mp", majorPref.join(","));
-    if (careerPref.length > 0) params.set("cp", careerPref.join(","));
-    params.set("aj", adjustment ? "1" : "0");
-    params.set("co", cooperative ? "1" : "0");
-    router.push(`/admission-result?${params.toString()}`);
+    try {
+      const profile: StudentProfile = {
+        province, subjectType, score, rank, budget,
+        careerPreference: careerPref,
+        majorPreference: majorPref,
+        adjustmentAccepted: adjustment,
+        cooperativeProgramAccepted: cooperative,
+        familyFinancialLevel: budget >= 120000 ? "high" : budget >= 30000 ? "medium" : "low",
+      };
+      // Persist to sessionStorage (fallback for non-URL access)
+      sessionStorage.setItem("qixu_admission_profile", JSON.stringify(profile));
+      // Encode to URL params for shareability & cross-tab support
+      const params = new URLSearchParams();
+      params.set("pv", province);
+      params.set("st", subjectType);
+      params.set("sc", String(score));
+      params.set("rk", String(rank));
+      params.set("bg", String(budget));
+      if (majorPref.length > 0) params.set("mp", majorPref.join(","));
+      if (careerPref.length > 0) params.set("cp", careerPref.join(","));
+      params.set("aj", adjustment ? "1" : "0");
+      params.set("co", cooperative ? "1" : "0");
+      router.push(`/admission-result?${params.toString()}`);
+    } finally {
+      // Reset submitting state after a short delay in case navigation is delayed
+      setTimeout(() => setSubmitting(false), 2000);
+    }
   };
 
   return (
@@ -176,8 +181,10 @@ export function AdmissionForm() {
                       className="mt-2 w-full accent-primary"
                     />
                     <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
-                      <span>{scoreRange.min}</span><span>{Math.round((scoreRange.min + scoreRange.max) / 3)}</span>
-                      <span>{Math.round((scoreRange.min + scoreRange.max) * 2 / 3)}</span><span>{scoreRange.max}</span>
+                      <span>{scoreRange.min}</span>
+                      <span>{Math.round(scoreRange.min + (scoreRange.max - scoreRange.min) / 3)}</span>
+                      <span>{Math.round(scoreRange.min + (scoreRange.max - scoreRange.min) * 2 / 3)}</span>
+                      <span>{scoreRange.max}</span>
                     </div>
                     <p className="mt-1 text-[10px] text-muted-foreground/60">精确输入高考分数，也可用滑块快速调整。各省满分不同（如上海660分、海南900分）</p>
                   </div>

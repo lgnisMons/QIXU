@@ -36,6 +36,8 @@ export const mockUniversities: University[] = [
 ];
 
 export const mockMajors: Major[] = [
+  // m-unified: 全校最低投档线（非特定专业），用于real data中按学校投档线的记录
+  { id: "m-unified", name: "不限专业（投档线）", category: "工学" as const, employmentDirection: [], graduateDirection: [], popularity: 5 },
   { id: "m-001", name: "计算机科学与技术", category: "工学", employmentDirection: ["互联网企业","金融科技","AI研发"], graduateDirection: ["计算机科学与技术"], popularity: 10 },
   { id: "m-002", name: "软件工程", category: "工学", employmentDirection: ["互联网企业","SaaS","游戏开发"], graduateDirection: ["软件工程"], popularity: 9 },
   { id: "m-003", name: "人工智能", category: "工学", employmentDirection: ["AI企业","自动驾驶","研究院所"], graduateDirection: ["人工智能"], popularity: 10 },

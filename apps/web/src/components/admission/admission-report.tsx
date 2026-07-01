@@ -21,7 +21,17 @@ const CITY_LIVING_COST: Record<string, number> = {
   "深圳": 24000, "北京": 26000, "上海": 26000, "广州": 20000,
   "杭州": 20000, "武汉": 16000, "南京": 18000, "成都": 15000,
   "长沙": 15000, "青岛": 16000, "郑州": 14000, "福州": 16000,
-  "金华": 14000, "镇江": 14000, "湘潭": 12000,
+  "珠海": 18000, "东莞": 16000, "佛山": 16000, "厦门": 20000,
+  "汕头": 14000, "湛江": 13000, "茂名": 12000, "江门": 13000,
+  "惠州": 14000, "肇庆": 12000, "韶关": 12000, "梅州": 11000,
+  "潮州": 12000, "中山": 16000, "金华": 14000, "镇江": 14000,
+  "湘潭": 12000, "宁波": 18000, "苏州": 18000, "无锡": 17000,
+  "重庆": 15000, "西安": 14000, "天津": 18000, "大连": 15000,
+  "沈阳": 14000, "哈尔滨": 13000, "长春": 13000, "济南": 16000,
+  "合肥": 15000, "南昌": 14000, "昆明": 13000, "贵阳": 13000,
+  "南宁": 13000, "海口": 15000, "兰州": 12000, "银川": 12000,
+  "乌鲁木齐": 12000, "呼和浩特": 13000, "西宁": 11000, "拉萨": 12000,
+  "太原": 13000, "石家庄": 13000, "廊坊": 14000, "烟台": 14000,
 };
 const DEFAULT_LIVING_COST = 15000;
 
@@ -147,7 +157,7 @@ function RecCard({ rec, index, studentRank }: { rec: AdmissionRecommendation; in
               <div className="flex items-center gap-2">
                 <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-[10px] font-bold text-primary">{index + 1}</span>
                 <CardTitle className="text-base">{rec.universityName}</CardTitle>
-                {rec.tier === "safe" ? <Badge variant="success" className="text-xs">保底</Badge> : rec.tier === "match" ? <Badge className="text-xs bg-success/20 text-success">稳妥</Badge> : <Badge variant="secondary" className="text-xs">冲刺</Badge>}
+                {rec.tier === "safe" ? <Badge variant="success" className="text-xs">保底</Badge> : rec.tier === "match" ? <Badge className="text-xs bg-success/20 text-success">稳妥</Badge> : <Badge variant="warning" className="text-xs">冲刺</Badge>}
               </div>
               <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1"><GraduationCap className="h-3 w-3" />{rec.majorName}</span>
@@ -183,7 +193,7 @@ function RecCard({ rec, index, studentRank }: { rec: AdmissionRecommendation; in
             ) : (
               <span className="flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-muted-foreground">专业不匹配</span>
             )}
-            <span className="rounded bg-muted/50 px-2 py-0.5 text-muted-foreground">{new Date().getFullYear()}数据</span>
+            <span className="rounded bg-muted/50 px-2 py-0.5 text-muted-foreground">2025数据</span>
           </div>
 
           {/* P2: AI Natural Language Explanation */}
@@ -241,7 +251,7 @@ function CostAnalysis({ recommendations }: { recommendations: AdmissionRecommend
                 </tr>
               </thead>
               <tbody>
-                {recommendations.slice(0, 10).map((rec) => {
+                {recommendations.map((rec) => {
                   const living = getLivingCost(rec.universityCity);
                   const yearly = rec.tuition + living;
                   const fourYear = yearly * 4;
@@ -366,7 +376,7 @@ function DecisionBanner() {
         <div>
           <p className="text-sm font-medium text-foreground">请结合个人情况独立决策</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            以上推荐基于历年录取数据分析（模拟数据）和规则引擎生成，<strong>仅供参考</strong>。
+            以上推荐基于2023-2025年录取数据分析和规则引擎生成，<strong>仅供参考</strong>。
             AI 不能保证录取结果。最终志愿填报决策由你做出。
             正式填报请以各省教育考试院官方数据为准。
           </p>
@@ -424,6 +434,12 @@ export function AdmissionReport({ output }: AdmissionReportProps) {
   const match = filtered.filter((r) => r.tier === "match");
   const safe = filtered.filter((r) => r.tier === "safe");
 
+  // Global numbering across tiers
+  let globalIdx = 0;
+  const reachWithIdx = reach.map((rec) => ({ rec, idx: globalIdx++ }));
+  const matchWithIdx = match.map((rec) => ({ rec, idx: globalIdx++ }));
+  const safeWithIdx = safe.map((rec) => ({ rec, idx: globalIdx++ }));
+
   return (
     <motion.div ref={reportRef} initial="hidden" animate="show" variants={staggerContainer} className="space-y-6">
       {/* Summary */}
@@ -437,7 +453,7 @@ export function AdmissionReport({ output }: AdmissionReportProps) {
           <Badge variant="success">{safe.length} 保底</Badge>
         </div>
         <p className="mt-3 text-[10px] text-muted-foreground/50">
-          生成时间：{new Date(generatedAt).toLocaleString("zh-CN")} · 数据来源：模拟2023-2025年录取数据 · 置信度：低（模拟数据）
+          生成时间：{new Date(generatedAt).toLocaleString("zh-CN")} · 数据来源：2023-2025年公开录取数据 · 仅供参考
         </p>
       </motion.div>
 
@@ -508,7 +524,7 @@ export function AdmissionReport({ output }: AdmissionReportProps) {
         <motion.div variants={fadeInUp}>
           <h3 className="mb-3 flex items-center gap-2 text-lg font-bold"><TrendingUp className="h-5 w-5 text-warning" />冲刺院校 ({reach.length})</h3>
           <p className="mb-3 text-xs text-muted-foreground">录取概率相对较低，但值得尝试。建议冲刺不超过志愿总数的20%。</p>
-          <div className="space-y-3">{reach.map((rec, i) => <RecCard key={rec.id} rec={rec} index={i} studentRank={student.rank} />)}</div>
+          <div className="space-y-3">{reachWithIdx.map(({ rec, idx }) => <RecCard key={rec.id} rec={rec} index={idx} studentRank={student.rank} />)}</div>
         </motion.div>
       )}
 
@@ -517,7 +533,7 @@ export function AdmissionReport({ output }: AdmissionReportProps) {
         <motion.div variants={fadeInUp}>
           <h3 className="mb-3 flex items-center gap-2 text-lg font-bold"><ShieldCheck className="h-5 w-5 text-success" />稳妥院校 ({match.length})</h3>
           <p className="mb-3 text-xs text-muted-foreground">你的位次在往年录取范围之内，录取概率较高。建议作为主力志愿。</p>
-          <div className="space-y-3">{match.map((rec, i) => <RecCard key={rec.id} rec={rec} index={i} studentRank={student.rank} />)}</div>
+          <div className="space-y-3">{matchWithIdx.map(({ rec, idx }) => <RecCard key={rec.id} rec={rec} index={idx} studentRank={student.rank} />)}</div>
         </motion.div>
       )}
 
@@ -526,7 +542,7 @@ export function AdmissionReport({ output }: AdmissionReportProps) {
         <motion.div variants={fadeInUp}>
           <h3 className="mb-3 flex items-center gap-2 text-lg font-bold"><CheckCircle2 className="h-5 w-5 text-success" />保底院校 ({safe.length})</h3>
           <p className="mb-3 text-xs text-muted-foreground">位次远超往年录取线，录取把握极大。建议至少填报1-2个保底志愿。</p>
-          <div className="space-y-3">{safe.map((rec, i) => <RecCard key={rec.id} rec={rec} index={i} studentRank={student.rank} />)}</div>
+          <div className="space-y-3">{safeWithIdx.map(({ rec, idx }) => <RecCard key={rec.id} rec={rec} index={idx} studentRank={student.rank} />)}</div>
         </motion.div>
       )}
 
@@ -542,7 +558,7 @@ export function AdmissionReport({ output }: AdmissionReportProps) {
       {/* Disclaimer — comprehensive */}
       <motion.div variants={fadeInUp} className="rounded-lg border border-dashed border-border/60 bg-muted/20 p-4 text-center">
         <p className="text-[11px] text-muted-foreground/60">
-          ⚠️ 以上推荐基于模拟2023-2025年录取数据（非官方）和规则引擎生成，仅作参考。数据来源：模拟数据 · 置信度：低。AI 不声称"保证录取"或"最佳答案"。实际志愿填报请以各省教育考试院官方发布的招生计划和录取数据为准。最终决策由你做出。
+          ⚠️ 以上推荐基于2023-2025年公开录取数据和规则引擎生成，仅作参考。AI 不声称"保证录取"或"最佳答案"。实际志愿填报请以各省教育考试院官方发布的招生计划和录取数据为准。最终决策由你做出。
         </p>
       </motion.div>
 

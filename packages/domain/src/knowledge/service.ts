@@ -1,16 +1,16 @@
 /**
- * Knowledge domain — recommendation rule engine (mock).
+ * Knowledge domain — recommendation rule engine.
  *
  * 7 rule categories: Reach, Match, Safe, Budget, Major, Employment, Risk.
  * Tier boundaries (clean partition, no overlap):
- *   Reach: rankRatio 0.70 — 1.00 (student at or below cutoff)
+ *   Reach: rankRatio < 1.00 (student at or below cutoff)
  *   Match: rankRatio 1.00 — 1.50 (student above cutoff)
  *   Safe:  rankRatio 1.50+          (student well above cutoff)
  *
- * No AI/LLM — pure rule-based scoring. Extensible for future ML models.
+ * Province filtering is applied at data query level — only records matching
+ * the student's province and subject type are considered.
  *
- * Province filtering is handled in the UI layer (result page filter),
- * not in the engine — the engine searches all available data.
+ * No AI/LLM — pure rule-based scoring. Extensible for future ML models.
  */
 
 import { generateId } from "../utils";
@@ -37,6 +37,9 @@ const RULE_WEIGHTS: Record<string, number> = {
   risk: 0.12,
 };
 
+// Cooperative / high-tuition threshold (CNY/year)
+const COOP_TUITION_THRESHOLD = 50000;
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -51,6 +54,10 @@ function findRule(rules: RuleResult[], category: RuleCategory): RuleResult {
   };
 }
 
+function formatK(n: number): string {
+  return n >= 10000 ? `${(n / 10000).toFixed(1)}万` : String(n);
+}
+
 // ---------------------------------------------------------------------------
 // Rule Engine
 // ---------------------------------------------------------------------------
@@ -61,59 +68,70 @@ export function runRecommendationEngine(
     maxRecommendations?: number;
     year?: number;
     subjectType?: "物理类" | "历史类";
-    provinceFilter?: string[];
   }
 ): AdmissionRecommendationOutput {
   const year = options?.year ?? 2025;
   const subjectType = options?.subjectType ?? student.subjectType;
   const max = options?.maxRecommendations ?? 15;
-  const provinceFilter = options?.provinceFilter;
 
-  // Query ALL provinces — province filtering is a UI concern
-  let records = getAdmissionRecords({ year, subjectType });
+  // FIX Bug 2: Filter by student's province AND subject type at data level
+  let records = getAdmissionRecords({
+    year,
+    subjectType,
+    province: student.province, // CRITICAL: only load records for student's province
+  });
   const universities = getAllUniversities();
   const majors = getAllMajors();
 
+  // Deduplicate universities by ID, preferring real data (gd-*) over mock (u-*)
+  const uniById = new Map<string, University>();
+  // Track which names we've seen to skip duplicate mocks
+  const seenNames = new Set<string>();
+  for (const u of universities) {
+    const isMock = u.id.startsWith("u-");
+    if (isMock && seenNames.has(u.name)) continue;
+    uniById.set(u.id, u);
+    seenNames.add(u.name);
+  }
+
   const scored: AdmissionRecommendation[] = [];
+  const perUniCount = new Map<string, number>();
 
   for (const record of records) {
-    const university = universities.find((u) => u.id === record.universityId);
+    const university = uniById.get(record.universityId);
     const major = majors.find((m) => m.id === record.majorId);
     if (!university || !major) continue;
 
-    const rules = evaluateAllRules(student, record, university, major);
+    // Limit to at most 2 recommendations per university to avoid one school dominating
+    const count = perUniCount.get(university.id) ?? 0;
+    if (count >= 2) continue;
+    perUniCount.set(university.id, count + 1);
+
+    const { rules, riskLevel } = evaluateAllRules(student, record, major);
     const composite = computeComposite(rules);
     const tier = classifyTier(rules);
 
     scored.push({
       id: generateId("rec"),
-      studentId: "student_001",
+      studentId: "student",
       universityId: university.id,
       majorId: major.id,
       universityName: university.name,
       universityCity: university.city,
       universityProvince: university.province,
-      majorName: major.name,
+      majorName: major.id === "m-unified" ? "不限专业（投档线）" : major.name,
       tuition: record.tuition,
       tier,
       compositeScore: composite,
       lowestRank: record.lowestRank,
       lowestScore: record.lowestScore,
       rules,
-      breakdown: buildBreakdown(student, record, university, major, rules),
+      breakdown: buildBreakdown(student, record, rules, riskLevel),
     });
   }
 
   scored.sort((a, b) => b.compositeScore - a.compositeScore);
-
-  // Apply province filter if specified (UI-level filtering)
-  let filtered = scored;
-  if (provinceFilter && provinceFilter.length > 0) {
-    filtered = scored.filter((r) => provinceFilter.includes(r.universityProvince));
-  }
-
-  filtered.sort((a, b) => b.compositeScore - a.compositeScore);
-  const top = filtered.slice(0, max);
+  const top = scored.slice(0, max);
   const summary = buildSummary(top, student);
 
   return {
@@ -131,75 +149,84 @@ export function runRecommendationEngine(
 function evaluateAllRules(
   student: StudentProfile,
   record: AdmissionRecord,
-  university: University,
-  major: Major
-): RuleResult[] {
-  return [
-    evaluateReach(student, record),
-    evaluateMatch(student, record),
-    evaluateSafe(student, record),
-    evaluateBudget(student, record),
-    evaluateMajor(student, major),
-    evaluateEmployment(student, major),
-    evaluateRisk(student, record),
-  ];
+  major: Major,
+): { rules: RuleResult[]; riskLevel: "low" | "medium" | "high" } {
+  const risk = evaluateRisk(student, record);
+  return {
+    rules: [
+      evaluateReach(student, record),
+      evaluateMatch(student, record),
+      evaluateSafe(student, record),
+      evaluateBudget(student, record),
+      evaluateMajor(student, major),
+      evaluateEmployment(student, major),
+      risk.rule,
+    ],
+    riskLevel: risk.riskLevel,
+  };
 }
 
-/** Reach (冲): student rank close to cutoff (0.70–1.00) */
+/** Reach (冲): student rank close to or below cutoff (rankRatio <= 1.00) */
 function evaluateReach(student: StudentProfile, record: AdmissionRecord): RuleResult {
   const rankRatio = record.lowestRank / Math.max(student.rank, 1);
   let score: number;
   let detail: string;
-  if (rankRatio >= 0.90 && rankRatio <= 1.00) {
+
+  // FIX Bug 7: rankRatio > 1 means student is ABOVE cutoff (safe/match zone),
+  // not reach. Reach only applies when rankRatio < 1.
+  if (rankRatio >= 0.95 && rankRatio <= 1.00) {
     score = 0.9;
-    detail = `位次(${student.rank})非常接近录取位次(${record.lowestRank})，可以冲刺`;
-  } else if (rankRatio >= 0.80 && rankRatio < 0.90) {
-    score = 0.6;
-    detail = `位次略低于录取线，仍有一定冲刺空间`;
-  } else if (rankRatio > 1.00 && rankRatio <= 1.15) {
-    score = 0.55;
-    detail = `位次略超录取线，冲刺把握较大`;
-  } else if (rankRatio >= 0.70 && rankRatio < 0.80) {
+    detail = `位次(${student.rank.toLocaleString()})非常接近录取位次(${record.lowestRank.toLocaleString()})，可以冲刺`;
+  } else if (rankRatio >= 0.85 && rankRatio < 0.95) {
+    score = 0.65;
+    detail = `位次略低于录取线，有一定冲刺可能`;
+  } else if (rankRatio >= 0.70 && rankRatio < 0.85) {
     score = 0.3;
     detail = `差距明显，冲刺难度较高`;
+  } else if (rankRatio > 1.00) {
+    score = 0.15;
+    detail = `位次已超过录取线，不属于冲刺范围`;
   } else {
-    score = 0.1;
+    score = 0.05;
     detail = `差距过大，不建议作为冲刺目标`;
   }
   return { category: "reach", score, label: "冲刺", detail, passed: score >= 0.4 };
 }
 
-/** Match (稳): student above cutoff (1.00–1.50) */
+/** Match (稳): student above cutoff (rankRatio 1.00 — 1.50) */
 function evaluateMatch(student: StudentProfile, record: AdmissionRecord): RuleResult {
   const rankRatio = record.lowestRank / Math.max(student.rank, 1);
   let score: number;
   let detail: string;
   if (rankRatio >= 1.10 && rankRatio <= 1.50) {
     score = 0.95;
-    detail = `位次(${student.rank})在录取范围之内，录取可能性大`;
+    detail = `位次(${student.rank.toLocaleString()})在录取范围(${record.lowestRank.toLocaleString()})之内，录取可能性大`;
   } else if (rankRatio > 1.50 && rankRatio <= 2.00) {
-    score = 0.85;
+    score = 0.8;
     detail = `位次稳超录取线，录取把握很大`;
   } else if (rankRatio >= 1.00 && rankRatio < 1.10) {
-    score = 0.65;
-    detail = `位次刚好越过录取线，有较大把握`;
+    score = 0.6;
+    detail = `位次刚好越过录取线，有较大把握但需注意风险`;
+  } else if (rankRatio > 2.00) {
+    score = 0.4;
+    detail = `位次远超录取线，建议作为保底而非稳妥`;
   } else {
-    score = 0.15;
-    detail = `差距较大，不属于稳妥选择`;
+    score = 0.1;
+    detail = `位次未达录取线，不属于稳妥选择`;
   }
-  return { category: "match", score, label: "稳妥", detail, passed: score >= 0.6 };
+  return { category: "match", score, label: "稳妥", detail, passed: score >= 0.55 };
 }
 
-/** Safe (保): student well above cutoff (1.50+) */
+/** Safe (保): student well above cutoff (rankRatio 1.50+) */
 function evaluateSafe(student: StudentProfile, record: AdmissionRecord): RuleResult {
   const rankRatio = record.lowestRank / Math.max(student.rank, 1);
   let score: number;
   let detail: string;
   if (rankRatio >= 2.00) {
     score = 1.0;
-    detail = `位次远超录取线，录取几乎确定`;
+    detail = `位次(${student.rank.toLocaleString()})远超录取线(${record.lowestRank.toLocaleString()})，录取几乎确定`;
   } else if (rankRatio >= 1.50) {
-    score = 0.9;
+    score = 0.85;
     detail = `位次明显高于录取线，保底安全`;
   } else {
     score = 0.1;
@@ -208,19 +235,18 @@ function evaluateSafe(student: StudentProfile, record: AdmissionRecord): RuleRes
   return { category: "safe", score, label: "保底", detail, passed: score >= 0.6 };
 }
 
-/** Budget: tuition + estimated living cost vs student budget */
+/** Budget: tuition vs student budget */
 function evaluateBudget(student: StudentProfile, record: AdmissionRecord): RuleResult {
-  // Budget fit is straightforward: can the student afford this record's tuition?
-  // If the student doesn't accept cooperative programs and the record has high
-  // tuition (>100k), the budget check naturally fails — no multiplier needed.
-  // The cooperative flag is separately checked in risk evaluation.
+  // FIX Bug 5: Removed broken costMultiplier. Check tuition directly.
+  // High-tuition (cooperative) programs are flagged in risk evaluation instead.
   const effectiveCost = record.tuition;
   const ratio = student.budget / Math.max(effectiveCost, 1);
 
   let score: number;
   let detail: string;
-  // low-income family → stricter budget check
+  // FIX Bug 8: passed threshold must respect strictness for low-income families
   const strictness = student.familyFinancialLevel === "low" ? 1.2 : 1.0;
+  const passedThreshold = 1.0 * strictness;
 
   if (ratio >= 2 * strictness) {
     score = 1.0;
@@ -235,16 +261,23 @@ function evaluateBudget(student: StudentProfile, record: AdmissionRecord): RuleR
     score = 0.1;
     detail = `学费超出预算较多`;
   }
-  return { category: "budget", score, label: "预算", detail, passed: ratio >= 1.0 };
+  return { category: "budget", score, label: "预算", detail, passed: ratio >= passedThreshold };
 }
 
 /** Major: category preference match */
 function evaluateMajor(student: StudentProfile, major: Major): RuleResult {
-  const prefMatch = student.majorPreference.length === 0 ||
+  // m-unified (投档线) means "any major at this school" — don't penalize for major mismatch
+  const isUnified = major.id === "m-unified";
+  const prefMatch = isUnified ||
+    student.majorPreference.length === 0 ||
     student.majorPreference.includes(major.category);
+
   let score: number;
   let detail: string;
-  if (prefMatch && student.majorPreference.length > 0) {
+  if (isUnified) {
+    score = 0.7;
+    detail = `按学校投档线计算，具体专业需入校后分流或选择`;
+  } else if (prefMatch && student.majorPreference.length > 0) {
     score = 1.0;
     detail = `「${major.name}」(${major.category})符合你的专业偏好`;
   } else if (student.majorPreference.length === 0) {
@@ -259,6 +292,11 @@ function evaluateMajor(student: StudentProfile, major: Major): RuleResult {
 
 /** Employment: career direction alignment */
 function evaluateEmployment(student: StudentProfile, major: Major): RuleResult {
+  // m-unified has no employment direction
+  if (major.id === "m-unified") {
+    return { category: "employment", score: 0.5, label: "就业", detail: "投档线数据，专业就业方向需入校后确定", passed: true };
+  }
+
   const hasPref = student.careerPreference.length > 0;
   const overlap = hasPref
     ? major.employmentDirection.filter((d) =>
@@ -284,19 +322,26 @@ function evaluateEmployment(student: StudentProfile, major: Major): RuleResult {
   return { category: "employment", score, label: "就业", detail, passed: score >= 0.5 };
 }
 
-/** Risk: comprehensive admission risk */
+/** Risk: comprehensive admission risk. Returns both rule result and risk level. */
 function evaluateRisk(
   student: StudentProfile,
   record: AdmissionRecord,
-): RuleResult {
+): { rule: RuleResult; riskLevel: "low" | "medium" | "high" } {
   const rankRatio = record.lowestRank / Math.max(student.rank, 1);
   const budgetOk = student.budget >= record.tuition;
 
   const riskFactors: string[] = [];
-  if (rankRatio < 1.0) riskFactors.push("位次低于往年录取线");
+  if (rankRatio < 0.90) riskFactors.push("位次低于往年录取线，录取难度大");
+  else if (rankRatio < 1.0) riskFactors.push("位次接近录取线边缘");
   if (!budgetOk) riskFactors.push("学费超出预算");
-  if (student.cooperativeProgramAccepted && record.tuition > 100000) {
-    riskFactors.push("中外合作项目学费较高");
+  // FIX Bug 6: Flag when student does NOT accept cooperative programs
+  // but tuition is high (suggesting cooperative/expensive program)
+  if (!student.cooperativeProgramAccepted && record.tuition > COOP_TUITION_THRESHOLD) {
+    riskFactors.push("高学费项目（可能为中外合作办学），你未接受此类项目");
+  }
+  // FIX: Not accepting adjustment increases risk when close to cutoff
+  if (!student.adjustmentAccepted && rankRatio < 1.10) {
+    riskFactors.push("未接受专业调剂，进档后存在退档风险");
   }
 
   let riskLevel: "low" | "medium" | "high";
@@ -317,7 +362,10 @@ function evaluateRisk(
     detail = `多重风险：${riskFactors.join("；")}`;
   }
 
-  return { category: "risk", score, label: "风险", detail, passed: riskLevel !== "high" };
+  return {
+    rule: { category: "risk", score, label: "风险", detail, passed: riskLevel !== "high" },
+    riskLevel,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -342,15 +390,12 @@ function classifyTier(rules: RuleResult[]): "reach" | "match" | "safe" {
 function buildBreakdown(
   student: StudentProfile,
   record: AdmissionRecord,
-  _university: University,
-  _major: Major,
-  rules: RuleResult[]
+  rules: RuleResult[],
+  riskLevel: "low" | "medium" | "high",
 ): AdmissionRecommendation["breakdown"] {
-  const matchRule = findRule(rules, "match");
   const budgetRule = findRule(rules, "budget");
   const majorRule = findRule(rules, "major");
   const employmentRule = findRule(rules, "employment");
-  const riskRule = findRule(rules, "risk");
 
   return {
     scoreGap: student.score - record.lowestScore,
@@ -358,7 +403,7 @@ function buildBreakdown(
     budgetFit: budgetRule.passed,
     majorMatch: majorRule.passed,
     employmentScore: Math.round(employmentRule.score * 10),
-    riskLevel: riskRule.passed ? "low" : riskRule.score >= 0.4 ? "medium" : "high",
+    riskLevel,
   };
 }
 
@@ -370,21 +415,16 @@ function buildSummary(
   const match = recommendations.filter((r) => r.tier === "match").length;
   const safe = recommendations.filter((r) => r.tier === "safe").length;
 
-  // Count unique provinces
-  const provinces = [...new Set(recommendations.map((r) => r.universityProvince))];
-
   const parts = [
     `基于你的${student.score}分(位次${student.rank.toLocaleString()}，${student.subjectType}，${student.province})`,
-    `${recommendations.length === 0 ? "暂无" : `覆盖${provinces.length}省·共${recommendations.length}条`}推荐：`,
+    `${recommendations.length === 0 ? "暂无" : `共${recommendations.length}条`}推荐：`,
     `${safe}保底 · ${match}稳妥 · ${reach}冲刺。`,
-    student.majorPreference.length > 0 ? `专业偏好：${student.majorPreference.join("、")}` : "",
+    student.majorPreference.length > 0 ? `专业偏好：${student.majorPreference.join("、")}。` : "",
     recommendations.length === 0
-      ? `当前数据暂不支持你的${student.subjectType}组合，正在努力扩展中。`
-      : "可在结果页按省份筛选。建议结合兴趣与职业规划综合考虑。",
+      ? `当前${student.province}${student.subjectType}数据暂不足，正在努力扩展中。`
+      : "建议结合兴趣、职业规划和家庭情况综合考虑，最终决策由你做出。",
   ];
   return parts.filter(Boolean).join("");
 }
 
-function formatK(n: number): string {
-  return n >= 10000 ? `${(n / 10000).toFixed(1)}万` : String(n);
-}
+export { evaluateAllRules, evaluateReach, evaluateMatch, evaluateSafe, evaluateBudget, evaluateMajor, evaluateEmployment, evaluateRisk };
